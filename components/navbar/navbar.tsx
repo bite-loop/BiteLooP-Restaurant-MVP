@@ -15,7 +15,7 @@ export const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center space-x-2">
             <Image
-              src={theme === "dark" ? LOGOS.NEW : LOGOS.NEW}
+              src={theme === "dark" ? LOGOS.DARK : LOGOS.LIGHT}
               alt="FoodExpress Logo"
               className="h-24 w-24 object-contain"
             />
@@ -25,10 +25,10 @@ export const Navbar = () => {
           <div className="flex items-center space-x-3">
             {/* Theme Toggle Button */}
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="icon"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="text-white hover:bg-white/20"
+              className=""
             >
               {theme === "dark" ? (
                 <Sun className="h-5 w-5" />

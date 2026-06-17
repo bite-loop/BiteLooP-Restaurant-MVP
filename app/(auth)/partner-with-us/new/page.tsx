@@ -1,4 +1,4 @@
-// app/restaurant/onboarding/page.tsx
+'use client'
 import { 
   Building2, 
   Utensils, 
@@ -22,9 +22,15 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Separator } from '@/components/ui/separator';
 import { Navbar } from '@/components/navbar/navbar';
 import Footer from '@/components/footer/onboarding/footer';
+import { useState } from 'react';
+import { RegisterDialog } from '@/components/dialog/auth/signup';
+import { LoginDialog } from '@/components/dialog/auth/login';
 
 export default function RestaurantOnboardingPage() {
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   return (
+   <>
     <main className=" container mx-auto">
       <Navbar/>
       {/* Hero Section */}
@@ -47,7 +53,7 @@ export default function RestaurantOnboardingPage() {
                 Only valid for new restaurant partners. Get started in just 10 minutes.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button size="lg" className="gap-2">
+                <Button onClick={() => setIsRegisterOpen(true)} size="lg" className="gap-2">
                   Register your restaurant
                   <ArrowRight className="h-4 w-4" />
                 </Button>
@@ -269,6 +275,19 @@ export default function RestaurantOnboardingPage() {
         </div>
       </section>
       <Footer/>
+     <RegisterDialog 
+        open={isRegisterOpen}
+        onOpenChange={setIsRegisterOpen}
+        onLoginClick={() => setIsLoginOpen(true)}
+      />
+
+      <LoginDialog 
+        open={isLoginOpen}
+        onOpenChange={setIsLoginOpen}
+        onRegisterClick={() => setIsRegisterOpen(true)}
+      />
+      
     </main>
+   </>
   );
 }
