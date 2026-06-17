@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Montserrat, Roboto } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { ThemeProvider } from "next-themes";
+import { Toaster } from "sonner";
 
 const robotoHeading = Roboto({subsets:['latin'],variable:'--font-heading'});
 
@@ -18,13 +20,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BiteLoop - Restaurant",
+  title: "BiteLooP - Order food on loop",
   description: "Food Delivery App",
   icons: {
-     icon: '/logo.png'
-  }
+    icon: [
+      {
+        url: "/logo.png",
+        href: "/logo.png",
+      },
+    ],
+  },
 };
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,10 +38,26 @@ export default function RootLayout({
 }>) {
   return (
     <html
+      suppressHydrationWarning
       lang="en"
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", montserrat.variable, robotoHeading.variable)}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider
+         attribute="class"
+        defaultTheme="dark"
+        enableSystem
+        disableTransitionOnChange
+        >
+          <Toaster/>
+          <main className="w-full min-h-screen">
+            <div>
+             
+              {children}
+            </div>
+          </main>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
