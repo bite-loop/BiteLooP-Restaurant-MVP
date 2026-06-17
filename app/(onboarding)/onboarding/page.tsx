@@ -6,6 +6,7 @@ import { Navbar } from '@/components/navbar/navbar'
 import Image from 'next/image'
 import { LOGOS } from '@/public/logo/logo'
 import { useRouter } from 'next/navigation'
+import Link from "next/link"
 
 
 
@@ -116,7 +117,8 @@ const Onboarding = () => {
 
             {/* Footer Text */}
             <p className="text-center text-white/70 text-xs">
-              By continuing, you agree to our Terms of Service and Privacy Policy
+              By continuing, you agree to our 
+              <Link href={"/term-conditions"} className="hover:underline font-bold"> Terms</Link> of Service and Privacy Policy
             </p>
           </div>
         </div>
