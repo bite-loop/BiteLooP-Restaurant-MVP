@@ -189,7 +189,7 @@ export default function RestaurantOnboardingPage() {
               </p>
             </div>
             
-            <Accordion type="single" collapsible className="w-full">
+           <Accordion className="w-full">
               <AccordionItem value="item-1">
                 <AccordionTrigger>
                   What are the documents required to start deliveries through BiteLoop?
