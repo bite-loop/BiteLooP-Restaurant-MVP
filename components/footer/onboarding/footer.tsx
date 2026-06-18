@@ -199,10 +199,10 @@ export default function Footer() {
               <div className="flex items-center gap-3">
                 <Phone className="h-4 w-4 text-muted-foreground" />
                 <Link 
-                  href="tel:+919999999999" 
+                  href="tel:+1 (999)999-9999" 
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  +91 99999 99999
+                 +1 (999)999-9999
                 </Link>
               </div>
               <div className="flex items-center gap-3">
