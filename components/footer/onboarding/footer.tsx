@@ -193,7 +193,7 @@ export default function Footer() {
                 <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <span className="text-sm text-muted-foreground">
                   123 Food Street,<br />
-                  Mumbai, India 400001
+                  Canada, ON.
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -253,7 +253,7 @@ export default function Footer() {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Made with</span>
             <Heart className="h-4 w-4 text-red-500 fill-red-500" />
-            <span>in India</span>
+            <span>in Canada</span>
           </div>
           <div className="flex items-center gap-4">
             <Link 
