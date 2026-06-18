@@ -98,7 +98,7 @@ export default function RestaurantOnboardingPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">₹1.2L</div>
+                  <div className="text-2xl font-bold">$10,000</div>
                   <p className="text-xs text-muted-foreground">Per restaurant</p>
                 </CardContent>
               </Card>
