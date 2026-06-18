@@ -1,4 +1,3 @@
-// components/auth/LoginDialog.tsx
 'use client';
 
 import { useState } from 'react';
@@ -13,19 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Mail, Lock, AlertCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
-// Simulated auth functions - Replace with actual Firebase auth
-const handleEmailLogin = async (email: string, password: string) => {
-  console.log('Login:', { email, password });
-  // Add Firebase login logic here
-};
-
-const handleGoogleAuth = async () => {
-  console.log('Google Auth');
-  // Add Google sign-in logic here
-};
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
 
 interface LoginDialogProps {
   open: boolean;
@@ -38,16 +28,42 @@ export function LoginDialog({ open, onOpenChange, onRegisterClick }: LoginDialog
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const { signIn, signInWithGoogle } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess(false);
+    setIsLoading(true);
+
+    try {
+      await signIn(email, password);
+      setSuccess(true);
+      setTimeout(() => {
+        setEmail('');
+        setPassword('');
+        setSuccess(false);
+        onOpenChange(false);
+        router.push('/dashboard');
+      }, 1500);
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    setError('');
     setIsLoading(true);
     try {
-      await handleEmailLogin(email, password);
+      await signInWithGoogle();
       onOpenChange(false);
-    } catch (err) {
-      setError('Invalid email or password. Please try again.');
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Google sign in failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +77,7 @@ export function LoginDialog({ open, onOpenChange, onRegisterClick }: LoginDialog
             Welcome Back
           </DialogTitle>
           <DialogDescription className="text-center text-sm">
-            Sign in to continue ordering your favorite food
+            Sign in to continue managing your restaurant
           </DialogDescription>
         </DialogHeader>
 
@@ -130,7 +146,7 @@ export function LoginDialog({ open, onOpenChange, onRegisterClick }: LoginDialog
               </Label>
               <button
                 type="button"
-                className="text-sm text-red-500 hover:underline"
+                className="text-sm text-primary hover:underline"
                 onClick={() => {
                   // Handle forgot password
                   console.log('Forgot password');
@@ -154,25 +170,33 @@ export function LoginDialog({ open, onOpenChange, onRegisterClick }: LoginDialog
             </div>
           </div>
 
-          {/* Error Message */}
+          {/* Error/Success Messages */}
           {error && (
             <Alert variant="destructive" className="py-2">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">{error}</AlertDescription>
             </Alert>
           )}
+          {success && (
+            <Alert className="border-green-500 text-green-700 py-2">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <AlertDescription className="text-sm">
+                Signed in successfully! Redirecting...
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Submit */}
-          <Button type="submit" className="w-full h-11 bg-red-500" disabled={isLoading}>
+          <Button type="submit" className="w-full h-11" disabled={isLoading}>
             {isLoading ? 'Signing in...' : 'Sign in'}
           </Button>
 
           {/* Register Link */}
-          <p className="text-center text-sm  text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{' '}
             <button
               type="button"
-              className="text-red-500 hover:underline font-medium"
+              className="text-primary hover:underline font-medium"
               onClick={() => {
                 onOpenChange(false);
                 onRegisterClick();

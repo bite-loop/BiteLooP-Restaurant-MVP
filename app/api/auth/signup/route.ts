@@ -1,31 +1,35 @@
-import { adminAuth, adminDb } from "@/lib/firebase/admin";
-import { Restaurant } from "@/types/restaurants";
-import { NextRequest, NextResponse } from "next/server";
+// app/api/auth/signup/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { adminAuth, adminDb } from '@/lib/firebase/admin';
+import type { Restaurant } from '@/types/restaurants';
 
 export async function POST(request: NextRequest) {
-        try {
-          const {email, password} = await request.json()
-        if (!email || !password) {
-            return NextResponse.json(
-            { error: 'Email and password are required' },
-            { status: 400 }
-       );
-       }
+  try {
+    const { email, password } = await request.json();
 
-        if (password.length < 8) {
-          return NextResponse.json(
-          { error: 'Password must be at least 8 characters' },
-          { status: 400 }
-        );
-       }
-     
-       // create user record 
-       const userRecord = await adminAuth.createUser({
-          email,
-          password
-       })
-      const restaurantProfile: Omit<Restaurant, 'id'> = {
-      email: email, // Registration email
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: 'Email and password are required' },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: 'Password must be at least 8 characters' },
+        { status: 400 }
+      );
+    }
+
+    // Create user in Firebase Auth
+    const userRecord = await adminAuth.createUser({
+      email,
+      password,
+    });
+
+    // Create restaurant profile in Firestore
+    const restaurantProfile: Omit<Restaurant, 'id'> = {
+      email: email,
       name: '',
       slug: '',
       description: '',
@@ -81,8 +85,13 @@ export async function POST(request: NextRequest) {
         legalName: '',
         businessNumber: '',
         hstNumber: '',
-        // businessEmail REMOVED - we use email field above
         businessPhone: '',
+        numberOfLocations: 0,
+        socialMedia: {
+            facebook: '',
+            instagram: '',
+            twitter: ''
+        }
       },
       bankDetails: {
         accountHolderName: '',
@@ -95,7 +104,7 @@ export async function POST(request: NextRequest) {
       },
       contactPerson: {
         name: '',
-        email: email, // Use registration email for contact person
+        email: email,
         phone: '',
         position: 'owner',
       },
@@ -117,12 +126,38 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    await adminDb.collection('partner_restaurats').doc(userRecord.uid).set(restaurantProfile)
-    // create session cookie
-    const idToken = await adminAuth.createCustomToken(userRecord.uid);
-    const sessionCookie = await adminAuth.createSessionCookie(idToken, {
-      expiresIn: 60 * 60 * 24 * 7 * 1000,
+
+    await adminDb.collection('restaurants').doc(userRecord.uid).set(restaurantProfile);
+
+    // Get ID token for the user (needed for session cookie)
+    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+    const tokenResponse = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email, 
+          password, 
+          returnSecureToken: true 
+        }),
+      }
+    );
+
+    const tokenData = await tokenResponse.json();
+
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to get ID token');
+    }
+
+    // Create session cookie using the ID token
+    const sessionCookie = await adminAuth.createSessionCookie(tokenData.idToken, {
+      expiresIn: 60 * 60 * 24 * 7 * 1000, // 7 days
     });
+
+    // Get the user data
+    const userDoc = await adminDb.collection('restaurants').doc(userRecord.uid).get();
+    const userData = userDoc.data();
 
     const response = NextResponse.json({
       success: true,
@@ -130,9 +165,11 @@ export async function POST(request: NextRequest) {
       user: {
         id: userRecord.uid,
         email: userRecord.email,
+        ...userData,
       },
     });
 
+    // Set session cookie
     response.cookies.set('session', sessionCookie, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -143,8 +180,7 @@ export async function POST(request: NextRequest) {
 
     return response;
 
-
-        } catch (error: any) {
+  } catch (error: any) {
     console.error('Signup error:', error);
     
     if (error.code === 'auth/email-already-exists') {
