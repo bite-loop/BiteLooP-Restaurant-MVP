@@ -17,23 +17,13 @@ import { Separator } from '@/components/ui/separator';
 import { 
   Mail, 
   Lock, 
-  User, 
   AlertCircle,
   CheckCircle2
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
-
-// Simulated auth functions - Replace with actual Firebase auth
-const handleEmailSignup = async (email: string, password: string, name: string) => {
-  console.log('Signup:', { email, password, name });
-  // Add Firebase signup logic here
-};
-
-const handleGoogleAuth = async () => {
-  console.log('Google Auth');
-  // Add Google sign-in logic here
-};
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
 
 interface RegisterDialogProps {
   open: boolean;
@@ -42,13 +32,15 @@ interface RegisterDialogProps {
 }
 
 export function RegisterDialog({ open, onOpenChange, onLoginClick }: RegisterDialogProps) {
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  
+  const { signUp, signInWithGoogle } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,18 +54,32 @@ export function RegisterDialog({ open, onOpenChange, onLoginClick }: RegisterDia
 
     setIsLoading(true);
     try {
-      await handleEmailSignup(email, password, name);
+      await signUp(email, password);
       setSuccess(true);
       setTimeout(() => {
-        setName('');
         setEmail('');
         setPassword('');
         setAgreeTerms(false);
         setSuccess(false);
         onOpenChange(false);
+        router.push('/partner-with-us/new');
       }, 1500);
-    } catch (err) {
-      setError('Failed to create account. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    setError('');
+    setIsLoading(true);
+    try {
+      await signInWithGoogle();
+      onOpenChange(false);
+      router.push('/partner-with-us/new');
+    } catch (err: any) {
+      setError(err.message || 'Google sign in failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -83,11 +89,11 @@ export function RegisterDialog({ open, onOpenChange, onLoginClick }: RegisterDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px] p-6">
         <DialogHeader className="space-y-2">
-          <DialogTitle className="text-2xl font-bold  text-center">
+          <DialogTitle className="text-2xl font-bold text-center">
             Create Account
           </DialogTitle>
           <DialogDescription className="text-center text-sm">
-            Join BiteLoop and start ordering delicious food
+            Join BiteLoop and start your restaurant journey
           </DialogDescription>
         </DialogHeader>
 
@@ -128,26 +134,6 @@ export function RegisterDialog({ open, onOpenChange, onLoginClick }: RegisterDia
             </span>
           </div>
 
-          {/* Full Name */}
-          <div className="space-y-1.5">
-            <Label htmlFor="register-name" className="text-sm font-medium">
-              Full Name
-            </Label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="register-name"
-                type="text"
-                placeholder="John Doe"
-                className="pl-9 h-11"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
           {/* Email */}
           <div className="space-y-1.5">
             <Label htmlFor="register-email" className="text-sm font-medium">
@@ -183,12 +169,12 @@ export function RegisterDialog({ open, onOpenChange, onLoginClick }: RegisterDia
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 disabled={isLoading}
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Password must be at least 6 characters
+              Password must be at least 8 characters
             </p>
           </div>
 
@@ -206,15 +192,15 @@ export function RegisterDialog({ open, onOpenChange, onLoginClick }: RegisterDia
               className="text-sm text-muted-foreground leading-tight cursor-pointer"
             >
               I agree to BiteLoop's{' '}
-              <Link href="/terms" className="text-red-500 hover:underline">
+              <Link href="/terms" className="text-primary hover:underline">
                 Terms of Service
               </Link>
               ,{' '}
-              <Link href="/privacy" className="text-red-500 hover:underline">
+              <Link href="/privacy" className="text-primary hover:underline">
                 Privacy Policy
               </Link>
               {' '}and{' '}
-              <Link href="/content-policy" className="text-red-500 hover:underline">
+              <Link href="/content-policy" className="text-primary hover:underline">
                 Content Policies
               </Link>
             </label>
@@ -231,13 +217,13 @@ export function RegisterDialog({ open, onOpenChange, onLoginClick }: RegisterDia
             <Alert className="border-green-500 text-green-700 py-2">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
               <AlertDescription className="text-sm">
-                Account created successfully! Redirecting...
+                Account created successfully! Redirecting to onboarding...
               </AlertDescription>
             </Alert>
           )}
 
           {/* Submit */}
-          <Button type="submit" className="w-full h-11 bg-red-500" disabled={isLoading}>
+          <Button type="submit" className="w-full h-11" disabled={isLoading}>
             {isLoading ? 'Creating account...' : 'Create account'}
           </Button>
 
@@ -246,7 +232,7 @@ export function RegisterDialog({ open, onOpenChange, onLoginClick }: RegisterDia
             Already have an account?{' '}
             <button
               type="button"
-              className="text-red-500 hover:underline font-medium"
+              className="text-primary hover:underline font-medium"
               onClick={() => {
                 onOpenChange(false);
                 onLoginClick();

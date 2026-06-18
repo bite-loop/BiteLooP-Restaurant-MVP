@@ -22,13 +22,16 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Separator } from '@/components/ui/separator';
 import { Navbar } from '@/components/navbar/navbar';
 import Footer from '@/components/footer/onboarding/footer';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RegisterDialog } from '@/components/dialog/auth/signup';
 import { LoginDialog } from '@/components/dialog/auth/login';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function RestaurantOnboardingPage() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const {user} = useAuth()
+
   return (
    <>
     <main className=" container mx-auto">

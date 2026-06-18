@@ -12,12 +12,15 @@ interface AuthStore {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   fetchUser: () => Promise<void>;
+   hasFetched: boolean; 
+  
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
     user: null,
     isLoading: true,
     isAuthenticated: false,
+    hasFetched: false,
 
     signUp: async (email, password) => {
          try {
@@ -84,23 +87,35 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
            throw new Error(error.message || 'Logout failed')
          }
        },
-        fetchUser: async () => {
-           if (get().user) {
-             set({isLoading: false})
-             return
-           }
+      fetchUser: async () => {
+  if (get().hasFetched) {
+    set({ isLoading: false });
+    return;
+  }
 
-           try {
-             set({isLoading: true})
-             const res = await fetch('/api/auth/me', {
-                 credentials: 'include'
-             })
-             if(res.ok) {
-                 const user = await res.json()
-                 set({user, isAuthenticated: true, isLoading: false})
-             }
-           } catch (error:any) {
-             set({user: null, isAuthenticated: false, isLoading: false})
-           }
-        }
+  try {
+    set({ isLoading: true });
+    const res = await fetch('/api/auth/me', {
+      credentials: 'include',
+    });
+
+    if (res.ok) {
+      const userData = await res.json();
+      console.log("Fetched user data from API:", userData);
+      
+      // Ensure we're setting the user correctly
+      set({ 
+        user: userData, 
+        isAuthenticated: true, 
+        isLoading: false, 
+        hasFetched: true 
+      });
+    } else {
+      set({ user: null, isAuthenticated: false, isLoading: false, hasFetched: true });
+    }
+  } catch (error) {
+    console.error('Fetch user error:', error);
+    set({ user: null, isAuthenticated: false, isLoading: false, hasFetched: true });
+  }
+},
 }))

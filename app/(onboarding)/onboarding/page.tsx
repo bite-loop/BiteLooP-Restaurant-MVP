@@ -7,11 +7,14 @@ import Image from 'next/image'
 import { LOGOS } from '@/public/logo/logo'
 import { useRouter } from 'next/navigation'
 import Link from "next/link"
+import { useAuth } from "@/hooks/use-auth"
+import { useEffect } from "react"
 
 
 
 
 const Onboarding = () => {
+ 
   const router = useRouter()
   return (
     <section className='h-screen overflow-hidden bg-gradient-to-br from-red-600 via-red-500 to-yellow-500 flex flex-col'>
