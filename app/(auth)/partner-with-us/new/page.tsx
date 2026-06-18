@@ -128,6 +128,164 @@ export default function RestaurantOnboardingPage() {
         </div>
       </section>
 
+   
+    {/* Get Started Section - How to Partner */}
+<section className="py-24">
+  <div className="container px-4 md:px-6">
+    <div className="space-y-12">
+      <div className="space-y-3 text-center">
+        <Badge className="gap-2 text-sm px-4 py-2 w-fit mx-auto" variant="secondary">
+          <Clock className="h-4 w-4" />
+          Takes only 10 minutes
+        </Badge>
+        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          Everything you need to get started
+        </h2>
+        <p className="text-xl text-muted-foreground max-w-[700px] mx-auto">
+          Simple requirements to become a BiteLoop partner in Canada
+        </p>
+      </div>
+
+      {/* Animated Steps Timeline */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        {/* Step 1 - Restaurant Profile */}
+        <div className="group relative text-center  space-y-4 p-6 rounded-xl transition-all duration-300 dark:hover:bg-neutral-950  hover:shadow-lg">
+          <div className="relative mx-auto">
+            <div className="h-20 w-20 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-all duration-300 flex items-center justify-center mx-auto group-hover:scale-110 transform">
+              <Building2 className="h-10 w-10 text-primary transition-transform duration-300 group-hover:rotate-12" />
+            </div>
+            <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-primary flex items-center justify-center animate-pulse">
+              <ArrowRight className="h-3 w-3 text-primary-foreground" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Restaurant Profile</h3>
+            <p className="text-sm text-muted-foreground">
+              Set up your restaurant name, address, cuisine type, operating hours, and contact details
+            </p>
+          </div>
+          {/* Connector Line (hidden on mobile) */}
+          <div className="hidden md:block absolute top-[50%] -right-4 w-8 h-0.5 bg-gradient-to-r from-primary/50 to-transparent" />
+        </div>
+
+        {/* Step 2 - Menu & Food Items */}
+        <div className="group relative text-center dark:hover:bg-neutral-950  space-y-4 p-6 rounded-xl transition-all duration-300 hover:bg-background hover:shadow-lg">
+          <div className="relative mx-auto">
+            <div className="h-20 w-20 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-all duration-300 flex items-center justify-center mx-auto group-hover:scale-110 transform">
+              <Utensils className="h-10 w-10 text-primary transition-transform duration-300 group-hover:-rotate-12" />
+            </div>
+            <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-primary flex items-center justify-center animate-pulse delay-100">
+              <ArrowRight className="h-3 w-3 text-primary-foreground" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Menu & Food Photos</h3>
+            <p className="text-sm text-muted-foreground">
+              Upload your complete menu with prices, descriptions, and high-quality food images
+            </p>
+          </div>
+          {/* Connector Line (hidden on mobile) */}
+          <div className="hidden md:block absolute top-[50%] -right-4 w-8 h-0.5 bg-gradient-to-r from-primary/50 to-transparent" />
+        </div>
+
+        {/* Step 3 - Banking Details */}
+        <div className="group relative text-center dark:hover:bg-neutral-950  space-y-4 p-6 rounded-xl transition-all duration-300 hover:bg-background hover:shadow-lg">
+          <div className="relative mx-auto">
+            <div className="h-20 w-20 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-all duration-300 flex items-center justify-center mx-auto group-hover:scale-110 transform">
+              <CreditCard className="h-10 w-10 text-primary transition-transform duration-300 group-hover:rotate-12" />
+            </div>
+            <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-green-500 flex items-center justify-center">
+              <ShieldCheck className="h-3 w-3 text-white" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Bank Details</h3>
+            <p className="text-sm text-muted-foreground">
+              Provide your Canadian bank account information for receiving weekly payouts
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Required Information Card */}
+      <Card className="max-w-3xl mx-auto overflow-hidden border-2 hover:border-primary/50 transition-all duration-300">
+        <CardHeader className="bg-primary/5">
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary animate-bounce" />
+            What You'll Need to Provide
+          </CardTitle>
+          <CardDescription>
+            Have these ready for a quick 10-minute setup
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="group flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 hover:translate-x-1">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                <Building2 className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Business Name & Address</p>
+                <p className="text-xs text-muted-foreground">Your restaurant location in Canada</p>
+              </div>
+            </div>
+
+            <div className="group flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 hover:translate-x-1">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                <Clock className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Operating Hours</p>
+                <p className="text-xs text-muted-foreground">Your opening and closing times</p>
+              </div>
+            </div>
+
+            <div className="group flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 hover:translate-x-1">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                <Utensils className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Complete Menu with Prices</p>
+                <p className="text-xs text-muted-foreground">All food items and categories</p>
+              </div>
+            </div>
+
+            <div className="group flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 hover:translate-x-1">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                <Star className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Food Photos</p>
+                <p className="text-xs text-muted-foreground">High-quality images of your dishes</p>
+              </div>
+            </div>
+
+            <div className="group flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 hover:translate-x-1">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                <CreditCard className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Bank Account Information</p>
+                <p className="text-xs text-muted-foreground">Canadian bank details for payouts</p>
+              </div>
+            </div>
+
+            <div className="group flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 hover:translate-x-1">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                <Mail className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Contact Information</p>
+                <p className="text-xs text-muted-foreground">Email and phone for communication</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</section>
+
       {/* Why Partner Section */}
       <section className="py-16 md:py-24 ">
         <div className="container px-4 md:px-6">
