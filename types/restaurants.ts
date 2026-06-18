@@ -8,6 +8,11 @@ export interface Restaurant {
   slug: string;
   description: string;
   cuisine: string[];
+  //auth field
+  email: string; // Restaurant email for login
+  password?: string; // Only used during signup, not stored
+  displayName?: string; // Same as name
+  photoURL?: string;
   
   // Ratings
   rating: number;
@@ -76,21 +81,20 @@ export interface Restaurant {
   };
   
   // Business Details (Canada/Ontario specific)
-  businessDetails: {
-    legalName: string; // Legal business name
-    businessNumber: string; // Ontario Business Number
-    hstNumber?: string; // HST/GST Registration Number
-    businessEmail: string;
-    businessPhone: string;
-    website?: string;
-    yearEstablished?: number;
-    numberOfLocations?: number;
-    socialMedia?: {
-      instagram?: string;
-      facebook?: string;
-      twitter?: string;
-    };
+ businessDetails: {
+  legalName: string; // Legal business name
+  businessNumber: string; // Ontario Business Number
+  hstNumber?: string; // HST/GST Registration Number
+  businessPhone: string;
+  website?: string;
+  yearEstablished?: number;
+  numberOfLocations?: number;
+  socialMedia?: {
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
   };
+};
   
   // Bank Details (Canadian banking)
   bankDetails: {
@@ -133,6 +137,8 @@ export interface Restaurant {
     lastPayoutDate?: Timestamp;
     nextPayoutDate?: Timestamp;
   };
+  createdAt: Date | Timestamp;
+  updatedAt: Date | Timestamp;
 }
 
 // ============ OPERATING HOURS ============
@@ -244,7 +250,7 @@ export interface Review {
 }
 
 // ============ ONBOARDING FORM DATA ============
-// ============ ONBOARDING FORM DATA ============
+
 export interface OnboardingFormData {
   // Step 1: Business Type
   businessType: 'delivery_only' | 'dine_only' | 'both';
@@ -259,7 +265,6 @@ export interface OnboardingFormData {
     legalName: string;
     businessNumber: string;
     hstNumber: string;
-    businessEmail: string;
     businessPhone: string;
     website?: string;
     yearEstablished?: number;
@@ -312,11 +317,11 @@ export interface OnboardingFormData {
   consent: boolean;
   termsAccepted: boolean;
   
-  // Step 7: Waiting for Approval (Auto-set by system)
+  // Step 7: Waiting for Approval
   status: 'pending_approval' | 'approved' | 'rejected';
   submittedAt: Timestamp;
   reviewedBy?: string;
   reviewedAt?: Timestamp;
   rejectionReason?: string;
-  estimatedApprovalTime?: string; // "2-3 business days"
+  estimatedApprovalTime?: string;
 }
