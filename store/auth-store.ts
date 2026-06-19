@@ -87,7 +87,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
            throw new Error(error.message || 'Logout failed')
          }
        },
-      fetchUser: async () => {
+   fetchUser: async () => {
   if (get().hasFetched) {
     set({ isLoading: false });
     return;
@@ -101,11 +101,16 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     if (res.ok) {
       const userData = await res.json();
-      console.log("Fetched user data from API:", userData);
+      console.log("Fetched user data:", userData);
       
-      // Ensure we're setting the user correctly
+      // Ensure the user has an id field
+      const userWithId = {
+        ...userData,
+        id: userData.id || userData.uid || null,
+      };
+      
       set({ 
-        user: userData, 
+        user: userWithId, 
         isAuthenticated: true, 
         isLoading: false, 
         hasFetched: true 

@@ -26,10 +26,12 @@ import { useEffect, useState } from 'react';
 import { RegisterDialog } from '@/components/dialog/auth/signup';
 import { LoginDialog } from '@/components/dialog/auth/login';
 import { useAuth } from '@/hooks/use-auth';
+import OnboardingDialog from '@/components/dialog/onboarding/onboarding-dialog';
 
 export default function RestaurantOnboardingPage() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
   const {user} = useAuth()
 
   return (
@@ -56,10 +58,21 @@ export default function RestaurantOnboardingPage() {
                 Only valid for new restaurant partners. Get started in just 10 minutes.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button onClick={() => setIsRegisterOpen(true)} size="lg" className="gap-2">
+               {
+                user ? (
+                <>
+                <Button onClick={() => setIsOnboardingOpen(true)} size="lg" className="gap-2">
+                   Onboard your restaurant
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+                 </>) : 
+                (<>
+                 <Button onClick={() => setIsRegisterOpen(true)} size="lg" className="gap-2">
                   Register your restaurant
                   <ArrowRight className="h-4 w-4" />
                 </Button>
+                </>)
+               }
                 <Button size="lg" variant="outline" className="gap-2">
                   Watch how it works
                 </Button>
@@ -446,6 +459,11 @@ export default function RestaurantOnboardingPage() {
         open={isLoginOpen}
         onOpenChange={setIsLoginOpen}
         onRegisterClick={() => setIsRegisterOpen(true)}
+      />
+
+      <OnboardingDialog
+       open={isOnboardingOpen}
+       onOpenChange={setIsOnboardingOpen}
       />
       
     </main>
