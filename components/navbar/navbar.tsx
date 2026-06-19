@@ -28,6 +28,7 @@ export const Navbar = () => {
             console.log("Full user object:", user)
             console.log("Extracted userData:", userData)
             console.log("User name:", userName)
+            console.log("userid", userData.id)
             console.log("User email:", userEmail)
         }
     }, [user, userData, userName, userEmail])
