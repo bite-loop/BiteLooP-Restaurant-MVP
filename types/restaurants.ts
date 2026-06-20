@@ -251,6 +251,8 @@ export interface Review {
 
 // ============ ONBOARDING FORM DATA ============
 
+// types/restaurant.ts - Updated OnboardingFormData
+
 export interface OnboardingFormData {
   // Step 1: Business Type
   businessType: 'delivery_only' | 'dine_only' | 'both';
@@ -281,7 +283,7 @@ export interface OnboardingFormData {
     institutionNumber: string;
   };
   
-  // Step 4: Restaurant Profile
+  // Step 4: Restaurant Profile (with image upload)
   restaurantProfile: {
     name: string;
     description: string;
@@ -302,9 +304,12 @@ export interface OnboardingFormData {
     serviceFee: number;
     operatingHours: OperatingHours;
     images: {
-      logo: string;
-      cover: string[];
-      gallery: string[];
+      logo: string; // URL after upload (Cloudinary URL)
+      logoFile?: File | null; // Temporary file for upload
+      banner: string; // URL after upload (Cloudinary URL)
+      bannerFile?: File | null; // Temporary file for upload
+      gallery: string[]; // URLs after upload (Cloudinary URLs)
+      galleryFiles?: File[]; // Temporary files for upload
     };
   };
   
