@@ -13,6 +13,7 @@ import Step2BankDetails from '@/components/onboarding/multi-form/Step2BankDetail
 import Step3RestaurantProfile from '@/components/onboarding/multi-form/Step3RestaurantProfile';
 import Step4Menu from '@/components/onboarding/multi-form/Step4Menu';
 import Step5Review from '@/components/onboarding/multi-form/Step5Review';
+import { Navbar } from '@/components/navbar/navbar';
 
 const STEPS = [
   { 
@@ -118,7 +119,8 @@ export default function OnboardingFormPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <div className="container max-w-7xl mx-auto px-6 py-12">
+        <Navbar/>
+      <div className="container max-w-9xl mx-auto px-6 py-12">
         <div className="flex flex-col lg:flex-row gap-12">
           
           {/* Left Side - Steps */}
