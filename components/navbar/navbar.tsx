@@ -47,7 +47,7 @@ export const Navbar = () => {
     const handleLogout = async () => {
         try {
             await signOut()
-            router.push("/partner-with-us")
+            router.push("/partner-with-us/new")
             setDropdownOpen(false)
         } catch (error) {
             console.error("Logout failed:", error)
