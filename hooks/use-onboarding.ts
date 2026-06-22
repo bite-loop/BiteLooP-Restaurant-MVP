@@ -1,4 +1,4 @@
-// hooks/useOnboarding.ts
+// hooks/use-onboarding.ts
 import { useEffect } from 'react';
 import { useOnboardingStore } from '@/store/onboarding-store';
 import type { OnboardingFormData } from '@/types/restaurants';
@@ -9,6 +9,8 @@ interface UseOnboardingReturn {
   isLoading: boolean;
   error: string | null;
   isSubmitting: boolean;
+  isUploading: boolean;
+  uploadProgress: number;
   setStep: (step: number) => void;
   nextStep: () => void;
   prevStep: () => void;
@@ -16,6 +18,11 @@ interface UseOnboardingReturn {
   saveProgress: (restaurantId: string) => Promise<void>;
   loadProgress: (restaurantId: string) => Promise<void>;
   submitOnboarding: (restaurantId: string) => Promise<void>;
+  uploadImages: (restaurantId: string, files: { logo?: File; banner?: File; gallery?: File[] }) => Promise<{
+    logo?: string;
+    banner?: string;
+    gallery?: string[];
+  }>;
   reset: () => void;
 }
 
@@ -26,6 +33,8 @@ export const useOnboarding = (restaurantId?: string): UseOnboardingReturn => {
     isLoading,
     error,
     isSubmitting,
+    isUploading,
+    uploadProgress,
     setStep,
     nextStep,
     prevStep,
@@ -33,6 +42,7 @@ export const useOnboarding = (restaurantId?: string): UseOnboardingReturn => {
     saveProgress,
     loadProgress,
     submitOnboarding,
+    uploadImages,
     reset,
   } = useOnboardingStore();
 
@@ -49,6 +59,8 @@ export const useOnboarding = (restaurantId?: string): UseOnboardingReturn => {
     isLoading,
     error,
     isSubmitting,
+    isUploading,
+    uploadProgress,
     setStep,
     nextStep,
     prevStep,
@@ -56,6 +68,7 @@ export const useOnboarding = (restaurantId?: string): UseOnboardingReturn => {
     saveProgress,
     loadProgress,
     submitOnboarding,
+    uploadImages,
     reset,
   };
 };
