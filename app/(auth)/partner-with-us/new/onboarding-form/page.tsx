@@ -39,8 +39,8 @@ const STEPS = [
   },
   { 
     id: 4, 
-    title: 'Menu & Operational', 
-    subtitle: 'Your offerings & availability',
+    title: 'Menu Card', 
+    subtitle: 'Upload your restaurant menu',
     icon: Utensils,
     component: Step4Menu 
   },
@@ -59,7 +59,9 @@ export default function OnboardingFormPage() {
   const { user } = useAuth();
   
   const serviceType = searchParams.get('serviceType') || 'both';
-  const resId = searchParams.get('resId');
+  const resId = searchParams.get('resId'); // Get restaurant ID from URL
+
+  console.log('🔍 Parent - resId from URL:', resId); // Debug log
 
   const {
     currentStep,
@@ -72,6 +74,7 @@ export default function OnboardingFormPage() {
     updateFormData,
     saveProgress,
     submitOnboarding,
+    loadProgress,
   } = useOnboarding(resId || undefined);
 
   useEffect(() => {
@@ -80,6 +83,11 @@ export default function OnboardingFormPage() {
       router.push('/partner-with-us');
     }
   }, [resId, router]);
+  useEffect(() => {
+  if (resId) {
+    loadProgress(resId);
+  }
+}, [resId]);
 
   useEffect(() => {
     if (resId && currentStep > 1) {
@@ -119,7 +127,7 @@ export default function OnboardingFormPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-        <Navbar/>
+      <Navbar />
       <div className="container max-w-9xl mx-auto px-6 py-12">
         <div className="flex flex-col lg:flex-row gap-12">
           
@@ -223,6 +231,7 @@ export default function OnboardingFormPage() {
               <CurrentStepComponent
                 data={formData}
                 serviceType={serviceType}
+                restaurantId={resId || undefined} // ← ADD THIS LINE
                 onNext={handleNext}
                 onBack={prevStep}
                 onSubmit={handleSubmit}

@@ -46,10 +46,11 @@ export interface Restaurant {
   };
   
   // Images
-  images: {
+   images: {
     cover: string[];
     logo: string;
     gallery: string[];
+    menuCard?: string; // NEW - menu card image
   };
   
   // Operating Hours
@@ -304,12 +305,14 @@ export interface OnboardingFormData {
     serviceFee: number;
     operatingHours: OperatingHours;
     images: {
-      logo: string; // URL after upload (Cloudinary URL)
+      logo: string; // URL after upload
       logoFile?: File | null; // Temporary file for upload
-      banner: string; // URL after upload (Cloudinary URL)
+      banner: string; // URL after upload
       bannerFile?: File | null; // Temporary file for upload
-      gallery: string[]; // URLs after upload (Cloudinary URLs)
+      gallery: string[]; // URLs after upload
       galleryFiles?: File[]; // Temporary files for upload
+      menuCard: string; // URL after upload (NEW)
+      menuCardFile?: File | null; // Temporary file for upload (NEW)
     };
   };
   
