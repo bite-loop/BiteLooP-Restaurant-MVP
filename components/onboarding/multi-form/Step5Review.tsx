@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, CheckCircle2, Building2, CreditCard, Store, Utensils, FileText } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Building2, CreditCard, Store, Utensils, FileText, Image, Clock } from 'lucide-react';
 import type { OnboardingFormData } from '@/types/restaurants';
 
 interface Step5ReviewProps {
@@ -49,17 +49,35 @@ export default function Step5Review({ data, onSubmit, onBack, isLoading, isSubmi
       title: 'Restaurant Profile',
       items: [
         { label: 'Restaurant Name', value: data?.restaurantProfile?.name || 'Not set' },
+        { label: 'Description', value: data?.restaurantProfile?.description || 'Not set' },
+        { label: 'Cuisine', value: data?.restaurantProfile?.cuisine?.join(', ') || 'Not set' },
         { label: 'Address', value: data?.restaurantProfile?.address?.street || 'Not set' },
         { label: 'City', value: data?.restaurantProfile?.address?.city || 'Not set' },
         { label: 'Price Range', value: data?.restaurantProfile?.priceRange || 'Not set' },
       ]
     },
     {
-      icon: Utensils,
-      title: 'Menu',
+      icon: Image,
+      title: 'Images',
       items: [
-        { label: 'Categories', value: data?.menu?.categories?.length || 0 },
-        { label: 'Total Items', value: data?.menu?.categories?.reduce((sum, cat) => sum + cat.items.length, 0) || 0 },
+        { 
+          label: 'Logo', 
+          value: data?.restaurantProfile?.images?.logo ? '✅ Uploaded' : '❌ Not uploaded' 
+        },
+        { 
+          label: 'Banner', 
+          value: data?.restaurantProfile?.images?.banner ? '✅ Uploaded' : '❌ Not uploaded' 
+        },
+        { 
+          label: 'Menu Card', 
+          value: data?.restaurantProfile?.images?.menuCard ? '✅ Uploaded' : '❌ Not uploaded' 
+        },
+        { 
+          label: 'Gallery Images', 
+          value: data?.restaurantProfile?.images?.gallery?.length 
+            ? `${data.restaurantProfile.images.gallery.length} images uploaded` 
+            : 'No gallery images' 
+        },
       ]
     },
   ];
@@ -86,7 +104,7 @@ export default function Step5Review({ data, onSubmit, onBack, isLoading, isSubmi
                 {section.items.map((item, i) => (
                   <div key={i} className="flex justify-between text-sm py-1 border-b border-border/30 last:border-0">
                     <span className="text-muted-foreground">{item.label}</span>
-                    <span className="font-medium">{item.value}</span>
+                    <span className="font-medium truncate max-w-[150px]">{item.value}</span>
                   </div>
                 ))}
               </div>
@@ -95,15 +113,26 @@ export default function Step5Review({ data, onSubmit, onBack, isLoading, isSubmi
         ))}
       </div>
 
-      <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
-        <div className="flex items-center gap-2 text-sm">
-          <CheckCircle2 className="w-5 h-5 text-primary" />
-          <span className="font-medium">Business Type:</span>
-          <span className="text-muted-foreground">
-            {data?.businessType === 'delivery_only' && 'Delivery Only'}
-            {data?.businessType === 'dine_only' && 'Dine Only'}
-            {data?.businessType === 'both' && 'Both'}
-          </span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
+          <div className="flex items-center gap-2 text-sm">
+            <CheckCircle2 className="w-5 h-5 text-primary" />
+            <span className="font-medium">Business Type:</span>
+            <span className="text-muted-foreground">
+              {data?.businessType === 'delivery_only' && 'Delivery Only'}
+              {data?.businessType === 'dine_only' && 'Dine Only'}
+              {data?.businessType === 'both' && 'Both'}
+            </span>
+          </div>
+        </div>
+        <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="w-5 h-5 text-primary" />
+            <span className="font-medium">Status:</span>
+            <span className="text-muted-foreground">
+              {data?.status === 'pending_approval' ? 'Pending Approval' : 'Ready to Submit'}
+            </span>
+          </div>
         </div>
       </div>
 

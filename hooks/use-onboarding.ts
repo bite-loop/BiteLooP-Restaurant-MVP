@@ -47,11 +47,11 @@ export const useOnboarding = (restaurantId?: string): UseOnboardingReturn => {
   } = useOnboardingStore();
 
   // Load progress when restaurantId changes
-  useEffect(() => {
+ /*  useEffect(() => {
     if (restaurantId) {
       loadProgress(restaurantId);
     }
-  }, [restaurantId]);
+  }, [restaurantId]); */
 
   return {
     currentStep,

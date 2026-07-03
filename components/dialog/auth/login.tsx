@@ -46,7 +46,7 @@ export function LoginDialog({ open, onOpenChange, onRegisterClick }: LoginDialog
         setPassword('');
         setSuccess(false);
         onOpenChange(false);
-        router.push('/dashboard');
+        router.push('/partner-with-us/new');
       }, 1500);
     } catch (err: any) {
       setError(err.message || 'Invalid email or password. Please try again.');
@@ -61,7 +61,7 @@ export function LoginDialog({ open, onOpenChange, onRegisterClick }: LoginDialog
     try {
       await signInWithGoogle();
       onOpenChange(false);
-      router.push('/dashboard');
+      router.push('/partner-with-us/new');
     } catch (err: any) {
       setError(err.message || 'Google sign in failed. Please try again.');
     } finally {

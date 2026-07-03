@@ -1,7 +1,7 @@
 // components/onboarding/multi-form/Step3RestaurantProfile.tsx
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -73,21 +73,24 @@ export default function Step3RestaurantProfile({
     bannerFile: data?.restaurantProfile?.images?.bannerFile || null,
     gallery: data?.restaurantProfile?.images?.gallery || [],
     galleryFiles: data?.restaurantProfile?.images?.galleryFiles || [],
+    menuCard: data?.restaurantProfile?.images?.menuCard || '',
+    menuCardFile: data?.restaurantProfile?.images?.menuCardFile || null,
     operatingHours: data?.restaurantProfile?.operatingHours || defaultOperatingHours,
   });
 
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const menuCardInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
-    type: 'logo' | 'banner' | 'gallery'
+    type: 'logo' | 'banner' | 'gallery' | 'menuCard'
   ) => {
     const files = event.target.files;
     if (!files) return;
 
-    if (type === 'logo' || type === 'banner') {
+    if (type === 'logo' || type === 'banner' || type === 'menuCard') {
       const file = files[0];
       if (file) {
         const preview = URL.createObjectURL(file);
@@ -106,17 +109,19 @@ export default function Step3RestaurantProfile({
         gallery: [...formData.gallery, ...previews],
       });
     }
-    // Reset the input value so the same file can be selected again
     event.target.value = '';
   };
 
-  const removeImage = (type: 'logo' | 'banner' | 'gallery', index?: number) => {
+  const removeImage = (type: 'logo' | 'banner' | 'gallery' | 'menuCard', index?: number) => {
     if (type === 'logo') {
       setFormData({ ...formData, logo: '', logoFile: null });
       if (logoInputRef.current) logoInputRef.current.value = '';
     } else if (type === 'banner') {
       setFormData({ ...formData, banner: '', bannerFile: null });
       if (bannerInputRef.current) bannerInputRef.current.value = '';
+    } else if (type === 'menuCard') {
+      setFormData({ ...formData, menuCard: '', menuCardFile: null });
+      if (menuCardInputRef.current) menuCardInputRef.current.value = '';
     } else if (type === 'gallery' && index !== undefined) {
       const newGallery = [...formData.gallery];
       const newGalleryFiles = [...formData.galleryFiles];
@@ -140,90 +145,88 @@ export default function Step3RestaurantProfile({
     });
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  
-  console.log('🟢 Form submitted');
-  console.log('📸 Files to upload:', {
-    logoFile: formData.logoFile,
-    bannerFile: formData.bannerFile,
-    galleryFiles: formData.galleryFiles.length
-  });
-  console.log('🏪 Restaurant ID:', restaurantId);
-  
-  // Prepare data for submission
-  const submitData: Partial<OnboardingFormData> = {
-    restaurantProfile: {
-      name: formData.name,
-      description: formData.description,
-      cuisine: formData.cuisine.split(',').map(c => c.trim()).filter(Boolean),
-      address: {
-        street: formData.street,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-        latitude: parseFloat(formData.latitude) || 0,
-        longitude: parseFloat(formData.longitude) || 0,
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Ensure we have a restaurantId - use the prop, or fallback to empty string
+    const effectiveRestaurantId = restaurantId || '';
+    
+    // Prepare data for submission
+    const submitData: Partial<OnboardingFormData> = {
+      restaurantProfile: {
+        name: formData.name,
+        description: formData.description,
+        cuisine: formData.cuisine.split(',').map(c => c.trim()).filter(Boolean),
+        address: {
+          street: formData.street,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          latitude: parseFloat(formData.latitude) || 0,
+          longitude: parseFloat(formData.longitude) || 0,
+        },
+        priceRange: formData.priceRange as any,
+        deliveryTime: formData.deliveryTime,
+        estimatedDeliveryTime: formData.estimatedDeliveryTime,
+        minOrder: formData.minOrder,
+        deliveryFee: formData.deliveryFee,
+        serviceFee: formData.serviceFee,
+        operatingHours: formData.operatingHours,
+        images: {
+          logo: formData.logo,
+          logoFile: formData.logoFile || undefined,
+          banner: formData.banner,
+          bannerFile: formData.bannerFile || undefined,
+          gallery: formData.gallery,
+          galleryFiles: formData.galleryFiles,
+          menuCard: formData.menuCard,
+          menuCardFile: formData.menuCardFile || undefined,
+        },
       },
-      priceRange: formData.priceRange as any,
-      deliveryTime: formData.deliveryTime,
-      estimatedDeliveryTime: formData.estimatedDeliveryTime,
-      minOrder: formData.minOrder,
-      deliveryFee: formData.deliveryFee,
-      serviceFee: formData.serviceFee,
-      operatingHours: formData.operatingHours,
-      images: {
-        logo: formData.logo,
-        logoFile: formData.logoFile || undefined,
-        banner: formData.banner,
-        bannerFile: formData.bannerFile || undefined,
-        gallery: formData.gallery,
-        galleryFiles: formData.galleryFiles,
-      },
-    },
+    };
+
+    // Upload images if there are files to upload and we have a restaurantId
+    const hasFiles = effectiveRestaurantId && (
+      formData.logoFile || 
+      formData.bannerFile || 
+      formData.menuCardFile ||
+      formData.galleryFiles.length > 0
+    );
+    
+    if (hasFiles) {
+      try {
+        const uploadFiles: {
+          logo?: File;
+          banner?: File;
+          gallery?: File[];
+          menuCard?: File;
+        } = {
+          logo: formData.logoFile || undefined,
+          banner: formData.bannerFile || undefined,
+          gallery: formData.galleryFiles.length > 0 ? formData.galleryFiles : undefined,
+          menuCard: formData.menuCardFile || undefined,
+        };
+
+        const uploadedUrls = await uploadImages(effectiveRestaurantId, uploadFiles);
+
+        if (submitData.restaurantProfile) {
+          submitData.restaurantProfile.images = {
+            logo: uploadedUrls.logo || formData.logo || '',
+            banner: uploadedUrls.banner || formData.banner || '',
+            gallery: uploadedUrls.gallery || formData.gallery || [],
+            //@ts-ignore
+            menuCard: uploadedUrls.menuCard || formData.menuCard || '',
+          };
+        }
+      } catch (error) {
+        console.error('Image upload failed:', error);
+        // Continue with submission even if images fail
+      }
+    }
+
+    onNext(submitData);
   };
 
-  // Upload images if there are files to upload
-  const hasFiles = restaurantId && (formData.logoFile || formData.bannerFile || formData.galleryFiles.length > 0);
-  console.log('📤 Has files to upload?', hasFiles);
-  
-  if (hasFiles) {
-    console.log('📤 Starting image upload...');
-    console.log('📤 Calling uploadImages with:', {
-      restaurantId,
-      logo: formData.logoFile ? '✅' : '❌',
-      banner: formData.bannerFile ? '✅' : '❌',
-      gallery: formData.galleryFiles.length > 0 ? `✅ ${formData.galleryFiles.length} files` : '❌'
-    });
-    
-    try {
-      const uploadedUrls = await uploadImages(restaurantId, {
-        logo: formData.logoFile || undefined,
-        banner: formData.bannerFile || undefined,
-        gallery: formData.galleryFiles.length > 0 ? formData.galleryFiles : undefined,
-      });
-
-      console.log('✅ Upload complete:', uploadedUrls);
-
-      // Update the images in submitData with uploaded URLs
-      if (submitData.restaurantProfile) {
-        submitData.restaurantProfile.images = {
-          logo: uploadedUrls.logo || formData.logo || '',
-          banner: uploadedUrls.banner || formData.banner || '',
-          gallery: uploadedUrls.gallery || formData.gallery || [],
-        };
-      }
-    } catch (error) {
-      console.error('❌ Image upload failed:', error);
-      // Continue with submission even if images fail
-    }
-  } else {
-    console.log('⚠️ No files to upload, skipping upload');
-  }
-
-  console.log('📦 Submitting form data to next step');
-  onNext(submitData);
-};
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Upload Progress Indicator */}
@@ -369,6 +372,52 @@ const handleSubmit = async (e: React.FormEvent) => {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Menu Card Upload */}
+          <div className="mt-4">
+            <Label className="text-sm font-medium">Menu Card Image *</Label>
+            <div className="mt-2">
+              {formData.menuCard ? (
+                <div className="relative w-full max-w-md rounded-lg overflow-hidden border">
+                  <Image
+                    src={formData.menuCard}
+                    alt="Menu card preview"
+                    width={400}
+                    height={300}
+                    className="object-contain max-h-80 w-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage('menuCard')}
+                    className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-full hover:bg-destructive/90"
+                    disabled={isUploading}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => !isUploading && menuCardInputRef.current?.click()}
+                  className="w-full max-w-md h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors"
+                >
+                  <Upload className="w-10 h-10 text-muted-foreground mb-3" />
+                  <p className="text-sm text-muted-foreground">Click to upload menu card</p>
+                  <p className="text-xs text-muted-foreground">PNG, JPG (max 5MB)</p>
+                </div>
+              )}
+              <input
+                ref={menuCardInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload(e, 'menuCard')}
+                className="hidden"
+                disabled={isLoading || isUploading}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Upload a clear image of your restaurant menu. You can add individual menu items later.
+            </p>
           </div>
 
           {/* Gallery Upload */}
@@ -571,7 +620,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           <Label className="text-lg font-bold">Operating Hours</Label>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {DAYS.map((day) => {
             const dayData = formData.operatingHours[day.key as keyof OperatingHours];
             return (

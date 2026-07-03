@@ -1,252 +1,184 @@
 // components/onboarding/multi-form/Step4Menu.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, ArrowRight, ArrowLeft, Utensils, Tag } from 'lucide-react';
-import type { OnboardingFormData, MenuCategory, MenuItem } from '@/types/restaurants';
+import { ArrowRight, ArrowLeft, Upload, Image as ImageIcon, X } from 'lucide-react';
+import Image from 'next/image';
+import type { OnboardingFormData } from '@/types/restaurants';
+import { useOnboarding } from '@/hooks/use-onboarding';
 
 interface Step4MenuProps {
   data: Partial<OnboardingFormData>;
   onNext: (data: Partial<OnboardingFormData>) => void;
   onBack: () => void;
   isLoading?: boolean;
+  restaurantId?: string;
 }
 
-export default function Step4Menu({ data, onNext, onBack, isLoading }: Step4MenuProps) {
-  const [categories, setCategories] = useState<MenuCategory[]>(
-    data?.menu?.categories || []
-  );
+export default function Step4Menu({ 
+  data, 
+  onNext, 
+  onBack, 
+  isLoading,
+  restaurantId 
+}: Step4MenuProps) {
+  const { uploadImages, isUploading, uploadProgress } = useOnboarding(restaurantId);
+  
+  const [menuImages, setMenuImages] = useState<{
+    menuCard: string;
+    menuCardFile: File | null;
+  }>({
+    menuCard: data?.restaurantProfile?.images?.menuCard || '',
+    menuCardFile: data?.restaurantProfile?.images?.menuCardFile || null,
+  });
 
-  const addCategory = () => {
-    setCategories([
-      ...categories,
-      {
-        id: `cat_${Date.now()}`,
-        name: '',
-        displayOrder: categories.length + 1,
-        items: [],
-      },
-    ]);
+  const menuCardInputRef = useRef<HTMLInputElement>(null);
+
+  const handleMenuCardUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const file = files[0];
+    if (file) {
+      const preview = URL.createObjectURL(file);
+      setMenuImages({
+        menuCard: preview,
+        menuCardFile: file,
+      });
+    }
+    event.target.value = '';
   };
 
-  const removeCategory = (index: number) => {
-    setCategories(categories.filter((_, i) => i !== index));
+  const removeMenuCard = () => {
+    setMenuImages({ menuCard: '', menuCardFile: null });
+    if (menuCardInputRef.current) menuCardInputRef.current.value = '';
   };
 
-  const updateCategory = (index: number, field: keyof MenuCategory, value: any) => {
-    const updated = [...categories];
-    updated[index] = { ...updated[index], [field]: value };
-    setCategories(updated);
-  };
-
-  const addItem = (categoryIndex: number) => {
-    const updated = [...categories];
-    updated[categoryIndex].items.push({
-      id: `item_${Date.now()}`,
-      name: '',
-      description: '',
-      price: 0,
-      images: [],
-      category: updated[categoryIndex].name,
-      isVegetarian: false,
-      isVegan: false,
-      isGlutenFree: false,
-      containsAllergens: [],
-      isAvailable: true,
-      isPopular: false,
-      preparationTime: 15,
-      customizationOptions: [],
-      rating: 0,
-      numberOfRatings: 0,
-    });
-    setCategories(updated);
-  };
-
-  const removeItem = (categoryIndex: number, itemIndex: number) => {
-    const updated = [...categories];
-    updated[categoryIndex].items = updated[categoryIndex].items.filter((_, i) => i !== itemIndex);
-    setCategories(updated);
-  };
-
-  const updateItem = (categoryIndex: number, itemIndex: number, field: keyof MenuItem, value: any) => {
-    const updated = [...categories];
-    updated[categoryIndex].items[itemIndex] = {
-      ...updated[categoryIndex].items[itemIndex],
-      [field]: value,
-    };
-    setCategories(updated);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onNext({
-      menu: { categories },
-    });
+    
+    // Prepare data for submission
+    const submitData: Partial<OnboardingFormData> = {
+      restaurantProfile: {
+        ...data?.restaurantProfile,
+        //@ts-ignore
+        images: {
+          ...data?.restaurantProfile?.images,
+          menuCard: menuImages.menuCard || '',
+          menuCardFile: menuImages.menuCardFile || undefined,
+        },
+      },
+    };
+
+    // Upload menu card image if there's a file
+    if (restaurantId && menuImages.menuCardFile) {
+      try {
+        const uploadedUrls = await uploadImages(restaurantId, {
+          banner: menuImages.menuCardFile, // Upload as banner type
+        });
+
+        if (uploadedUrls.banner) {
+          submitData.restaurantProfile!.images!.menuCard = uploadedUrls.banner;
+          // Remove the file from the data
+          delete submitData.restaurantProfile!.images!.menuCardFile;
+        }
+      } catch (error) {
+        console.error('Menu card upload failed:', error);
+        // Continue with submission even if upload fails
+      }
+    }
+
+    onNext(submitData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="space-y-4">
         <div>
-          <p className="text-sm text-muted-foreground">Add your menu categories and items</p>
-        </div>
-        <Button
-          type="button"
-          onClick={addCategory}
-          disabled={isLoading}
-          className="h-12 px-6 gap-2"
-        >
-          <Plus className="w-5 h-5" /> Add Category
-        </Button>
-      </div>
+          <h3 className="text-lg font-semibold mb-2">Menu Card</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Upload an image of your restaurant menu card
+          </p>
 
-      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-        {categories.length === 0 && (
-          <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed">
-            <Utensils className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-lg font-medium">No categories yet</p>
-            <p className="text-sm text-muted-foreground">Click "Add Category" to start building your menu</p>
-          </div>
-        )}
-
-        {categories.map((category, catIdx) => (
-          <div key={category.id} className="border rounded-xl p-6 space-y-4 bg-card">
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <Label className="text-base font-semibold">Category Name</Label>
-                <Input
-                  className="mt-1 h-12 text-lg"
-                  placeholder="e.g., Appetizers"
-                  value={category.name}
-                  onChange={(e) => updateCategory(catIdx, 'name', e.target.value)}
-                  disabled={isLoading}
+          {/* Upload Progress Indicator */}
+          {isUploading && (
+            <div className="mb-4 p-4 bg-primary/5 rounded-xl border border-primary/20">
+              <div className="flex items-center gap-3">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
+                <span className="text-sm font-medium">Uploading menu card... {Math.round(uploadProgress)}%</span>
+              </div>
+              <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
                 />
               </div>
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="h-12 w-12 mt-6"
-                onClick={() => removeCategory(catIdx)}
-                disabled={isLoading}
-              >
-                <Trash2 className="h-5 w-5" />
-              </Button>
             </div>
+          )}
 
-            <div className="space-y-3">
-              {category.items.map((item, itemIdx) => (
-                <div key={item.id} className="border-l-4 border-primary/30 pl-4 space-y-3 bg-muted/10 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-sm font-medium">Item Name</Label>
-                        <Input
-                          className="mt-1 h-10"
-                          placeholder="Item name"
-                          value={item.name}
-                          onChange={(e) => updateItem(catIdx, itemIdx, 'name', e.target.value)}
-                          disabled={isLoading}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Price ($)</Label>
-                        <Input
-                          className="mt-1 h-10"
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          value={item.price || ''}
-                          onChange={(e) => updateItem(catIdx, itemIdx, 'price', parseFloat(e.target.value) || 0)}
-                          disabled={isLoading}
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="h-10 w-10 mt-6"
-                      onClick={() => removeItem(catIdx, itemIdx)}
-                      disabled={isLoading}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div>
-                    <Label className="text-sm font-medium">Description</Label>
-                    <Textarea
-                      className="mt-1"
-                      placeholder="Describe the item"
-                      value={item.description}
-                      onChange={(e) => updateItem(catIdx, itemIdx, 'description', e.target.value)}
-                      disabled={isLoading}
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap gap-4">
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={item.isVegetarian}
-                        onChange={(e) => updateItem(catIdx, itemIdx, 'isVegetarian', e.target.checked)}
-                        disabled={isLoading}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-green-600">🌱 Vegetarian</span>
-                    </label>
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={item.isVegan}
-                        onChange={(e) => updateItem(catIdx, itemIdx, 'isVegan', e.target.checked)}
-                        disabled={isLoading}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-green-700">🌿 Vegan</span>
-                    </label>
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={item.isGlutenFree}
-                        onChange={(e) => updateItem(catIdx, itemIdx, 'isGlutenFree', e.target.checked)}
-                        disabled={isLoading}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-yellow-600">🚫 Gluten Free</span>
-                    </label>
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={item.isPopular}
-                        onChange={(e) => updateItem(catIdx, itemIdx, 'isPopular', e.target.checked)}
-                        disabled={isLoading}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-red-500">⭐ Popular</span>
-                    </label>
-                  </div>
+          {/* Menu Card Upload */}
+          <div>
+            <Label className="text-sm font-medium">Menu Card Image *</Label>
+            <div className="mt-2">
+              {menuImages.menuCard ? (
+                <div className="relative w-full max-w-md rounded-lg overflow-hidden border">
+                  <Image
+                    src={menuImages.menuCard}
+                    alt="Menu card preview"
+                    width={400}
+                    height={300}
+                    className="object-contain max-h-80 w-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeMenuCard}
+                    className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-full hover:bg-destructive/90"
+                    disabled={isUploading}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-              ))}
+              ) : (
+                <div
+                  onClick={() => !isUploading && menuCardInputRef.current?.click()}
+                  className="w-full max-w-md h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors"
+                >
+                  <Upload className="w-10 h-10 text-muted-foreground mb-3" />
+                  <p className="text-sm text-muted-foreground">Click to upload menu card</p>
+                  <p className="text-xs text-muted-foreground">PNG, JPG (max 5MB)</p>
+                </div>
+              )}
+              <input
+                ref={menuCardInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleMenuCardUpload}
+                className="hidden"
+                disabled={isLoading || isUploading}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Upload a clear image of your restaurant menu. You can add individual menu items later.
+            </p>
+          </div>
+        </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full h-10 gap-2"
-                onClick={() => addItem(catIdx)}
-                disabled={isLoading}
-              >
-                <Plus className="h-4 w-4" /> Add Item to "{category.name || 'Category'}"
-              </Button>
+        {/* Info Box */}
+        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="text-blue-500 text-lg">ℹ️</div>
+            <div>
+              <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Menu Management</p>
+              <p className="text-sm text-blue-600 dark:text-blue-300 mt-1">
+                After your restaurant is approved, you'll be able to add individual menu items with 
+                prices, descriptions, and dietary information from your restaurant dashboard.
+              </p>
             </div>
           </div>
-        ))}
+        </div>
       </div>
 
       <div className="flex justify-between pt-6 border-t">
@@ -256,7 +188,7 @@ export default function Step4Menu({ data, onNext, onBack, isLoading }: Step4Menu
           size="lg" 
           className="h-14 px-8 text-lg gap-2"
           onClick={onBack} 
-          disabled={isLoading}
+          disabled={isLoading || isUploading}
         >
           <ArrowLeft className="w-5 h-5" /> Back
         </Button>
@@ -264,9 +196,9 @@ export default function Step4Menu({ data, onNext, onBack, isLoading }: Step4Menu
           type="submit" 
           size="lg" 
           className="h-14 px-8 text-lg gap-2"
-          disabled={isLoading || categories.length === 0}
+          disabled={isLoading || isUploading || !menuImages.menuCard}
         >
-          Review & Submit <ArrowRight className="w-5 h-5" />
+          {isUploading ? 'Uploading...' : 'Review & Submit'} <ArrowRight className="w-5 h-5" />
         </Button>
       </div>
     </form>

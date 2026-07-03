@@ -20,10 +20,16 @@ interface OnboardingStore {
   saveProgress: (restaurantId: string) => Promise<void>;
   loadProgress: (restaurantId: string) => Promise<void>;
   submitOnboarding: (restaurantId: string) => Promise<void>;
-  uploadImages: (restaurantId: string, files: { logo?: File | null; banner?: File | null; gallery?: File[] }) => Promise<{
+  uploadImages: (restaurantId: string, files: { 
+    logo?: File | null; 
+    banner?: File | null; 
+    gallery?: File[];
+    menuCard?: File | null; // Add this
+  }) => Promise<{
     logo?: string;
     banner?: string;
     gallery?: string[];
+    menuCard?: string; // Add this
   }>;
   reset: () => void;
 }
@@ -60,11 +66,13 @@ const initialState = {
       },
       images: {
         logo: '',
-        logoFile: null as File | null,  // Add this
+        logoFile: null as File | null,
         banner: '',
-        bannerFile: null as File | null, // Add this
+        bannerFile: null as File | null,
         gallery: [],
-        galleryFiles: [] as File[],      // Add this
+        galleryFiles: [] as File[],
+        menuCard: '', // ✅ Add this
+        menuCardFile: null as File | null, // ✅ Add this
       },
     },
   },
@@ -92,12 +100,14 @@ export const useOnboardingStore = create<OnboardingStore>((set, get) => ({
     formData: { ...state.formData, ...data }
   })),
 
+  // lib/stores/onboardingStore.ts - Modified uploadImages
+
 uploadImages: async (restaurantId, files) => {
   console.log('📸 uploadImages called:', { restaurantId, files });
   
   set({ isUploading: true, error: null, uploadProgress: 0 });
   
-  const results: { logo?: string; banner?: string; gallery?: string[] } = {};
+  const results: { logo?: string; banner?: string; gallery?: string[]; menuCard?: string } = {};
   
   // Count total files to upload
   const fileCount = Object.values(files).filter(Boolean).length;
@@ -163,6 +173,33 @@ uploadImages: async (restaurantId, files) => {
       updateProgress();
     }
 
+    // Upload menuCard (NEW)
+    if (files.menuCard) {
+      console.log('📤 Uploading menuCard...');
+      const menuCardFormData = new FormData();
+      menuCardFormData.append('image', files.menuCard);
+      menuCardFormData.append('restaurantId', restaurantId);
+      menuCardFormData.append('type', 'menuCard');
+      
+      const menuCardRes = await fetch('/api/onboarding/upload', {
+        method: 'POST',
+        body: menuCardFormData,
+      });
+      
+      console.log('MenuCard response status:', menuCardRes.status);
+      
+      if (!menuCardRes.ok) {
+        const errorText = await menuCardRes.text();
+        console.error('MenuCard upload failed:', errorText);
+        throw new Error(`MenuCard upload failed: ${menuCardRes.status}`);
+      }
+      
+      const menuCardData = await menuCardRes.json();
+      console.log('MenuCard upload success:', menuCardData);
+      results.menuCard = menuCardData.imageUrl;
+      updateProgress();
+    }
+
     // Upload gallery
     if (files.gallery && files.gallery.length > 0) {
       console.log('📤 Uploading gallery images...');
@@ -206,6 +243,8 @@ uploadImages: async (restaurantId, files) => {
       bannerFile: null,
       gallery: [],
       galleryFiles: [],
+      menuCard: '',
+      menuCardFile: null,
     };
 
     // Build updated images with proper required fields
@@ -216,6 +255,8 @@ uploadImages: async (restaurantId, files) => {
       bannerFile: null,
       gallery: results.gallery || existingImages.gallery || [],
       galleryFiles: [],
+      menuCard: results.menuCard || existingImages.menuCard || '',
+      menuCardFile: null,
     };
 
     // Update formData
@@ -265,6 +306,7 @@ uploadImages: async (restaurantId, files) => {
     set({ isUploading: false });
   }
 },
+
   saveProgress: async (restaurantId) => {
     set({ isLoading: true, error: null });
     try {
@@ -282,6 +324,8 @@ uploadImages: async (restaurantId, files) => {
             bannerFile: null,
             gallery: formData.restaurantProfile.images?.gallery || [],
             galleryFiles: [],
+            menuCard: formData.restaurantProfile.images?.menuCard || '',
+            menuCardFile: null,
           },
         } : undefined,
       };
@@ -342,15 +386,17 @@ uploadImages: async (restaurantId, files) => {
             logo: formData.restaurantProfile.images?.logo || '',
             banner: formData.restaurantProfile.images?.banner || '',
             gallery: formData.restaurantProfile.images?.gallery || [],
+            menuCard: formData.restaurantProfile.images?.menuCard || '',
           },
         } : undefined,
       };
       
-      // Remove File objects from cleanData using delete (they exist but we want to remove them)
+      // Remove File objects from cleanData
       if (cleanFormData?.restaurantProfile?.images) {
         delete (cleanFormData.restaurantProfile.images as any).logoFile;
         delete (cleanFormData.restaurantProfile.images as any).bannerFile;
         delete (cleanFormData.restaurantProfile.images as any).galleryFiles;
+        delete (cleanFormData.restaurantProfile.images as any).menuCardFile;
       }
 
       const response = await fetch('/api/onboarding/submit', {
