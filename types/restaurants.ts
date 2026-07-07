@@ -46,7 +46,7 @@ export interface Restaurant {
   };
   
   // Images
-   images: {
+  images: {
     cover: string[];
     logo: string;
     gallery: string[];
@@ -66,8 +66,9 @@ export interface Restaurant {
   // ============ RESTAURANT PORTAL FIELDS ============
   
   // Onboarding Status
-  onboardingStatus: 'pending' | 'in_progress' | 'completed' | 'rejected';
-  onboardingStep: number; // 1-4 steps
+  onboardingStatus: 'pending' | 'in_progress' | 'completed' | 'rejected' | 'pending_approval';
+  onboardingStep: number; // 1-5 steps
+  submittedAt?: Timestamp; // When onboarding was submitted
   completedAt?: Timestamp;
   approvedAt?: Timestamp;
   rejectedAt?: Timestamp;
@@ -82,20 +83,20 @@ export interface Restaurant {
   };
   
   // Business Details (Canada/Ontario specific)
- businessDetails: {
-  legalName: string; // Legal business name
-  businessNumber: string; // Ontario Business Number
-  hstNumber?: string; // HST/GST Registration Number
-  businessPhone: string;
-  website?: string;
-  yearEstablished?: number;
-  numberOfLocations?: number;
-  socialMedia?: {
-    instagram?: string;
-    facebook?: string;
-    twitter?: string;
+  businessDetails: {
+    legalName: string; // Legal business name
+    businessNumber: string; // Ontario Business Number
+    hstNumber?: string; // HST/GST Registration Number
+    businessPhone: string;
+    website?: string;
+    yearEstablished?: number;
+    numberOfLocations?: number;
+    socialMedia?: {
+      instagram?: string;
+      facebook?: string;
+      twitter?: string;
+    };
   };
-};
   
   // Bank Details (Canadian banking)
   bankDetails: {
@@ -251,9 +252,6 @@ export interface Review {
 }
 
 // ============ ONBOARDING FORM DATA ============
-
-// types/restaurant.ts - Updated OnboardingFormData
-
 export interface OnboardingFormData {
   // Step 1: Business Type
   businessType: 'delivery_only' | 'dine_only' | 'both';
@@ -311,8 +309,8 @@ export interface OnboardingFormData {
       bannerFile?: File | null; // Temporary file for upload
       gallery: string[]; // URLs after upload
       galleryFiles?: File[]; // Temporary files for upload
-      menuCard: string; // URL after upload (NEW)
-      menuCardFile?: File | null; // Temporary file for upload (NEW)
+      menuCard: string; // URL after upload
+      menuCardFile?: File | null; // Temporary file for upload
     };
   };
   

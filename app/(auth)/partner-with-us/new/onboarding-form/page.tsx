@@ -59,9 +59,7 @@ export default function OnboardingFormPage() {
   const { user } = useAuth();
   
   const serviceType = searchParams.get('serviceType') || 'both';
-  const resId = searchParams.get('resId'); // Get restaurant ID from URL
-
-  console.log('🔍 Parent - resId from URL:', resId); // Debug log
+  const resId = searchParams.get('resId');
 
   const {
     currentStep,
@@ -83,11 +81,12 @@ export default function OnboardingFormPage() {
       router.push('/partner-with-us');
     }
   }, [resId, router]);
+
   useEffect(() => {
-  if (resId) {
-    loadProgress(resId);
-  }
-}, [resId]);
+    if (resId) {
+      loadProgress(resId);
+    }
+  }, [resId]);
 
   useEffect(() => {
     if (resId && currentStep > 1) {
@@ -105,7 +104,9 @@ export default function OnboardingFormPage() {
     try {
       await submitOnboarding(resId);
       toast.success('Onboarding submitted successfully!');
-      router.push('/partner-with-us/new/success');
+      
+      // ✅ Pass resId to success page
+      router.push(`/partner-with-us/new/success?resId=${resId}`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to submit');
     }
@@ -231,7 +232,7 @@ export default function OnboardingFormPage() {
               <CurrentStepComponent
                 data={formData}
                 serviceType={serviceType}
-                restaurantId={resId || undefined} // ← ADD THIS LINE
+                restaurantId={resId || undefined}
                 onNext={handleNext}
                 onBack={prevStep}
                 onSubmit={handleSubmit}
