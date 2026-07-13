@@ -3,19 +3,19 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Sparkles, Mail, ArrowRight, Loader2 } from 'lucide-react';
+import { useAuthStore } from '@/store/auth-store';
+import { Loader2, Sparkles, Mail } from 'lucide-react';
 import { Navbar } from '@/components/navbar/navbar';
-import { RestaurantStatusChecker } from '@/components/sidebar/success-page/status-checker';
+import { RestaurantStatusSidebar } from '@/components/sidebar/success-page/onboarding-sidebar';
 import { StatusSidebarTrigger } from '@/components/sidebar/success-page/sidebar-trigger';
-import { useAuth } from '@/hooks/use-auth';
 
 export default function OnboardingSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, onboardingStatus, checkOnboardingStatus } = useAuthStore();
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [status, setStatus] = useState<string>('pending_approval');
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     const resId = searchParams.get('resId') || user?.id;
@@ -24,14 +24,53 @@ export default function OnboardingSuccessPage() {
     }
   }, [searchParams, user]);
 
+  // Check if already approved - redirect to partner-menu
+  useEffect(() => {
+    const checkStatus = async () => {
+      let currentStatus = onboardingStatus;
+      if (!currentStatus) {
+        currentStatus = await checkOnboardingStatus();
+      }
+      
+     setTimeout(() => {
+         if (currentStatus === 'approved') {
+        setIsRedirecting(true);
+        router.push('/partner-menu');
+        return;
+      }
+     },200000)
+      
+      if (currentStatus === 'pending_approval') {
+        setStatus('pending_approval');
+      }
+    };
+    
+    checkStatus();
+  }, [onboardingStatus, checkOnboardingStatus, router]);
+
   const handleStatusChange = (newStatus: string) => {
     setStatus(newStatus);
     if (newStatus === 'approved') {
+      setIsRedirecting(true);
       setTimeout(() => {
-        router.push('/partner/dashboard');
-      }, 2000);
+        router.push('/partner-menu');
+      }, 20000);
     }
   };
+
+  if (isRedirecting) {
+    return (
+      <>
+        <Navbar />
+        <div className="h-[calc(100vh-64px)] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Redirecting to your dashboard...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (!restaurantId) {
     return (
@@ -64,15 +103,15 @@ export default function OnboardingSuccessPage() {
             Your restaurant application is now under review.
           </p>
 
-          {/* Status Checker - This shows the compact status card */}
+          {/* Status Checker */}
           <div className="mb-4">
-            <RestaurantStatusChecker 
+            <RestaurantStatusSidebar 
               restaurantId={restaurantId}
               onStatusChange={handleStatusChange}
             />
           </div>
 
-          {/* View Detailed Status Button - This opens the sidebar */}
+          {/* View Detailed Status Button */}
           <div className="mb-4">
             <StatusSidebarTrigger 
               restaurantId={restaurantId}

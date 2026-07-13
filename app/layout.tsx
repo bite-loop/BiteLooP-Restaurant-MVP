@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
+import { RestaurantProtectedRoute } from "@/helper/protected_routes/restaurant-protected-route";
 
 const robotoHeading = Roboto({subsets:['latin'],variable:'--font-heading'});
 
@@ -49,13 +50,15 @@ export default function RootLayout({
         enableSystem
         disableTransitionOnChange
         >
-          <Toaster/>
+         <RestaurantProtectedRoute>
+           <Toaster/>
           <main className="w-full min-h-screen">
             <div>
              
               {children}
             </div>
           </main>
+         </RestaurantProtectedRoute>
         </ThemeProvider>
       </body>
     </html>
