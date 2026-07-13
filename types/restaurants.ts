@@ -66,7 +66,7 @@ export interface Restaurant {
   // ============ RESTAURANT PORTAL FIELDS ============
   
   // Onboarding Status
-  onboardingStatus: 'pending' | 'in_progress' | 'completed' | 'rejected' | 'pending_approval';
+  onboardingStatus: 'pending' | 'in_progress' | 'approved' | 'rejected' | 'pending_approval';
   onboardingStep: number; // 1-5 steps
   submittedAt?: Timestamp; // When onboarding was submitted
   completedAt?: Timestamp;
