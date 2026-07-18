@@ -1,20 +1,21 @@
 // lib/stores/menu-store.ts
 import { create } from 'zustand';
 import type { MenuCategory, MenuItem } from '@/types/restaurants';
+import { useAuthStore } from './auth-store';
 
 interface MenuStore {
   categories: MenuCategory[];
   isLoading: boolean;
   error: string | null;
-  fetchMenu: (restaurantId: string) => Promise<void>;
-  addCategory: (restaurantId: string, name: string, description?: string) => Promise<MenuCategory>;
-  updateCategory: (restaurantId: string, categoryId: string, data: Partial<MenuCategory>) => Promise<void>;
-  deleteCategory: (restaurantId: string, categoryId: string) => Promise<void>;
-  reorderCategories: (restaurantId: string, categoryIds: string[]) => Promise<void>;
-  addItem: (restaurantId: string, categoryId: string, item: Omit<MenuItem, 'id' | 'category'>) => Promise<MenuItem>;
-  updateItem: (restaurantId: string, categoryId: string, itemId: string, data: Partial<MenuItem>) => Promise<void>;
-  deleteItem: (restaurantId: string, categoryId: string, itemId: string) => Promise<void>;
-  toggleItemAvailability: (restaurantId: string, categoryId: string, itemId: string) => Promise<void>;
+  fetchMenu: () => Promise<void>; // No arguments - gets restaurantId from auth store
+  addCategory: (name: string, description?: string) => Promise<MenuCategory>;
+  updateCategory: (categoryId: string, data: Partial<MenuCategory>) => Promise<void>;
+  deleteCategory: (categoryId: string) => Promise<void>;
+  reorderCategories: (categoryIds: string[]) => Promise<void>;
+  addItem: (categoryId: string, itemData: any) => Promise<any>; // Match the expected type
+  updateItem: (categoryId: string, itemId: string, data: any) => Promise<void>;
+  deleteItem: (categoryId: string, itemId: string) => Promise<void>;
+  toggleItemAvailability: (categoryId: string, itemId: string) => Promise<void>;
 }
 
 export const useMenuStore = create<MenuStore>((set, get) => ({
@@ -22,7 +23,15 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
   isLoading: false,
   error: null,
 
-  fetchMenu: async (restaurantId) => {
+  fetchMenu: async () => {
+    const user = useAuthStore.getState().user;
+    const restaurantId = user?.id;
+    
+    if (!restaurantId) {
+      set({ error: 'Restaurant ID not found', isLoading: false });
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const res = await fetch(`/api/menu?restaurantId=${restaurantId}`);
@@ -34,7 +43,12 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     }
   },
 
-  addCategory: async (restaurantId, name, description) => {
+  addCategory: async (name, description) => {
+    const user = useAuthStore.getState().user;
+    const restaurantId = user?.id;
+    
+    if (!restaurantId) throw new Error('Restaurant ID not found');
+
     try {
       const res = await fetch('/api/menu/category', {
         method: 'POST',
@@ -53,7 +67,12 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     }
   },
 
-  updateCategory: async (restaurantId, categoryId, data) => {
+  updateCategory: async (categoryId, data) => {
+    const user = useAuthStore.getState().user;
+    const restaurantId = user?.id;
+    
+    if (!restaurantId) throw new Error('Restaurant ID not found');
+
     try {
       const res = await fetch('/api/menu/category', {
         method: 'PATCH',
@@ -73,7 +92,12 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     }
   },
 
-  deleteCategory: async (restaurantId, categoryId) => {
+  deleteCategory: async (categoryId) => {
+    const user = useAuthStore.getState().user;
+    const restaurantId = user?.id;
+    
+    if (!restaurantId) throw new Error('Restaurant ID not found');
+
     try {
       const res = await fetch('/api/menu/category', {
         method: 'DELETE',
@@ -90,7 +114,12 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     }
   },
 
-  reorderCategories: async (restaurantId, categoryIds) => {
+  reorderCategories: async (categoryIds) => {
+    const user = useAuthStore.getState().user;
+    const restaurantId = user?.id;
+    
+    if (!restaurantId) throw new Error('Restaurant ID not found');
+
     try {
       const res = await fetch('/api/menu/category/reorder', {
         method: 'PATCH',
@@ -110,7 +139,12 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     }
   },
 
-  addItem: async (restaurantId, categoryId, itemData) => {
+  addItem: async (categoryId, itemData) => {
+    const user = useAuthStore.getState().user;
+    const restaurantId = user?.id;
+    
+    if (!restaurantId) throw new Error('Restaurant ID not found');
+
     try {
       const res = await fetch('/api/menu/item', {
         method: 'POST',
@@ -133,7 +167,12 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     }
   },
 
-  updateItem: async (restaurantId, categoryId, itemId, data) => {
+  updateItem: async (categoryId, itemId, data) => {
+    const user = useAuthStore.getState().user;
+    const restaurantId = user?.id;
+    
+    if (!restaurantId) throw new Error('Restaurant ID not found');
+
     try {
       const res = await fetch('/api/menu/item', {
         method: 'PATCH',
@@ -155,7 +194,12 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     }
   },
 
-  deleteItem: async (restaurantId, categoryId, itemId) => {
+  deleteItem: async (categoryId, itemId) => {
+    const user = useAuthStore.getState().user;
+    const restaurantId = user?.id;
+    
+    if (!restaurantId) throw new Error('Restaurant ID not found');
+
     try {
       const res = await fetch('/api/menu/item', {
         method: 'DELETE',
@@ -176,12 +220,12 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     }
   },
 
-  toggleItemAvailability: async (restaurantId, categoryId, itemId) => {
+  toggleItemAvailability: async (categoryId, itemId) => {
     const category = get().categories.find(c => c.id === categoryId);
     const item = category?.items.find(i => i.id === itemId);
     if (!item) return;
     
-    await get().updateItem(restaurantId, categoryId, itemId, {
+    await get().updateItem(categoryId, itemId, {
       isAvailable: !item.isAvailable,
     });
   },
