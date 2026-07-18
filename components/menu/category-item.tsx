@@ -7,18 +7,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { 
-  ChevronDown, 
-  ChevronRight,
+import {
+  ChevronDown,
   Plus,
   Edit,
   Trash2,
   Check,
   X,
-  GripVertical
+  Utensils,
+  Clock,
+  Sprout,
+  Leaf,
+  WheatOff,
+  Star,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { MenuItemRow } from './menu-item-row';
 
 interface CategoryItemProps {
@@ -27,17 +31,17 @@ interface CategoryItemProps {
   onToggle: () => void;
   onUpdate: (categoryId: string) => void;
   onDelete: (categoryId: string) => void;
-  onAddItem: (restaurantId: string, categoryId: string, itemData: any) => Promise<any>;
-  onUpdateItem: (restaurantId: string, categoryId: string, itemId: string, data: any) => Promise<void>;
-  onDeleteItem: (restaurantId: string, categoryId: string, itemId: string) => Promise<void>;
-  onToggleAvailability: (restaurantId: string, categoryId: string, itemId: string) => Promise<void>;
+  onAddItem: (categoryId: string, itemData: any) => Promise<any>;
+  onUpdateItem: (categoryId: string, itemId: string, data: any) => Promise<void>; 
+  onDeleteItem: (categoryId: string, itemId: string) => Promise<void>; 
+  onToggleAvailability: (categoryId: string, itemId: string) => Promise<void>; 
   isEditing: boolean;
   onStartEdit: () => void;
   onCancelEdit: () => void;
   editingName: string;
   setEditingName: (name: string) => void;
+  viewMode?: 'list' | 'grid';
 }
-
 export function CategoryItem({
   category,
   isExpanded,
@@ -53,6 +57,7 @@ export function CategoryItem({
   onCancelEdit,
   editingName,
   setEditingName,
+  viewMode = 'list',
 }: CategoryItemProps) {
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItem, setNewItem] = useState({
@@ -75,7 +80,7 @@ export function CategoryItem({
       return;
     }
     try {
-      await onAddItem('', category.id, newItem);
+      await onAddItem(category.id, newItem);
       setNewItem({
         name: '',
         description: '',
@@ -94,149 +99,223 @@ export function CategoryItem({
     }
   };
 
+  const itemCount = category.items?.length || 0;
+
   return (
-    <Card className="border border-border/50">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0">
-            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          </Button>
-          
-          {isEditing ? (
-            <div className="flex-1 flex items-center gap-2">
-              <Input
-                value={editingName}
-                onChange={(e) => setEditingName(e.target.value)}
-                className="max-w-xs h-8"
-                autoFocus
-              />
-              <Button size="sm" variant="ghost" onClick={() => onUpdate(category.id)}>
-                <Check className="h-4 w-4" />
-              </Button>
-              <Button size="sm" variant="ghost" onClick={onCancelEdit}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <span className="font-semibold flex-1">{category.name}</span>
-          )}
-
-          <span className="text-sm text-muted-foreground">
-            {category.items?.length || 0} items
-          </span>
-
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setShowAddItem(!showAddItem)}
-            className="h-8 w-8 p-0"
+    <Card className={cn('rounded-lg border shadow-none transition-all duration-200', isExpanded && 'border-primary/30 shadow-sm')}>
+      <CardContent className="p-0">
+        {/* Header */}
+        <div className="flex items-center gap-2 px-3 py-2">
+          <button
+            onClick={onToggle}
+            className={cn(
+              'flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-all hover:bg-secondary',
+              isExpanded && 'rotate-180'
+            )}
           >
-            <Plus className="h-4 w-4" />
-          </Button>
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
 
-          <Button size="sm" variant="ghost" onClick={onStartEdit} className="h-8 w-8 p-0">
-            <Edit className="h-4 w-4" />
-          </Button>
+          <div className="flex-1 min-w-0 cursor-pointer" onClick={onToggle}>
+            {isEditing ? (
+              <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                <Input
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  className="h-7 text-xs max-w-[200px] rounded-md"
+                  autoFocus
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 p-0 rounded-md text-green-600 hover:bg-green-500/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdate(category.id);
+                  }}
+                >
+                  <Check className="h-3 w-3" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 p-0 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCancelEdit();
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold">{category.name}</span>
+                <span className="text-[10px] font-medium text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
+                  {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                </span>
+              </div>
+            )}
+          </div>
 
-          <Button size="sm" variant="ghost" onClick={() => onDelete(category.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowAddItem(!showAddItem)}
+              className={cn('h-7 rounded-md text-[10px] font-medium gap-1', showAddItem && 'bg-secondary')}
+            >
+              <Plus className="h-3 w-3" />
+              Add
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onStartEdit}
+              className="h-6 w-6 p-0 rounded-md"
+            >
+              <Edit className="h-3 w-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onDelete(category.id)}
+              className="h-6 w-6 p-0 rounded-md text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
 
+        {/* Expanded Content */}
         {isExpanded && (
-          <div className="mt-4 space-y-4">
+          <div className="px-3 pb-3 border-t">
             {/* Add Item Form */}
             {showAddItem && (
-              <div className="border rounded-lg p-4 bg-muted/20 space-y-3">
-                <h4 className="font-medium text-sm">Add New Item</h4>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="my-3 p-3 rounded-lg bg-secondary/30 border">
+                <h4 className="text-xs font-semibold mb-3 flex items-center gap-1.5">
+                  <span className="flex h-5 w-5 items-center justify-center rounded bg-secondary">
+                    <Plus className="h-3 w-3" />
+                  </span>
+                  New item
+                </h4>
+
+                <div className="grid grid-cols-2 gap-2 mb-2">
                   <div>
-                    <Label className="text-xs">Name *</Label>
+                    <Label className="text-[10px] font-medium text-muted-foreground mb-0.5 block">Name</Label>
                     <Input
-                     
                       placeholder="Item name"
                       value={newItem.name}
                       onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                      className="h-7 text-xs rounded-md"
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">Price *</Label>
-                    <Input
-                     
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={newItem.price || ''}
-                      onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
-                    />
+                    <Label className="text-[10px] font-medium text-muted-foreground mb-0.5 block">Price</Label>
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={newItem.price || ''}
+                        onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
+                        className="h-7 text-xs rounded-md pl-5"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <Label className="text-xs">Description</Label>
+
+                <div className="mb-2">
+                  <Label className="text-[10px] font-medium text-muted-foreground mb-0.5 block">Description</Label>
                   <Textarea
-                    placeholder="Item description"
+                    placeholder="Brief description"
                     value={newItem.description}
                     onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                    className="min-h-[60px]"
+                    className="min-h-[50px] text-xs rounded-md resize-none"
                   />
                 </div>
-                <div className="flex flex-wrap gap-4">
-                  <label className="flex items-center gap-2 text-sm">
+
+                <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                  <button
+                    onClick={() => setNewItem({ ...newItem, isVegetarian: !newItem.isVegetarian })}
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium border transition-all',
+                      newItem.isVegetarian
+                        ? 'bg-green-500/10 text-green-600 border-green-500/20'
+                        : 'border text-muted-foreground hover:border-foreground/20'
+                    )}
+                  >
+                    <Sprout className="h-3 w-3" /> Veg
+                  </button>
+                  <button
+                    onClick={() => setNewItem({ ...newItem, isVegan: !newItem.isVegan })}
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium border transition-all',
+                      newItem.isVegan
+                        ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                        : 'border text-muted-foreground hover:border-foreground/20'
+                    )}
+                  >
+                    <Leaf className="h-3 w-3" /> Vegan
+                  </button>
+                  <button
+                    onClick={() => setNewItem({ ...newItem, isGlutenFree: !newItem.isGlutenFree })}
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium border transition-all',
+                      newItem.isGlutenFree
+                        ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'
+                        : 'border text-muted-foreground hover:border-foreground/20'
+                    )}
+                  >
+                    <WheatOff className="h-3 w-3" /> GF
+                  </button>
+                  <button
+                    onClick={() => setNewItem({ ...newItem, isPopular: !newItem.isPopular })}
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium border transition-all',
+                      newItem.isPopular
+                        ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                        : 'border text-muted-foreground hover:border-foreground/20'
+                    )}
+                  >
+                    <Star className="h-3 w-3" /> Popular
+                  </button>
+                  <div className="inline-flex items-center gap-1 rounded-md border px-2 py-1">
+                    <Clock className="h-3 w-3 text-muted-foreground" />
                     <input
-                      type="checkbox"
-                      checked={newItem.isVegetarian}
-                      onChange={(e) => setNewItem({ ...newItem, isVegetarian: e.target.checked })}
+                      type="number"
+                      value={newItem.preparationTime}
+                      onChange={(e) => setNewItem({ ...newItem, preparationTime: parseInt(e.target.value) || 15 })}
+                      className="w-8 bg-transparent text-[10px] font-medium outline-none text-center"
+                      min="1"
                     />
-                    Vegetarian
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newItem.isVegan}
-                      onChange={(e) => setNewItem({ ...newItem, isVegan: e.target.checked })}
-                    />
-                    Vegan
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newItem.isGlutenFree}
-                      onChange={(e) => setNewItem({ ...newItem, isGlutenFree: e.target.checked })}
-                    />
-                    Gluten Free
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newItem.isPopular}
-                      onChange={(e) => setNewItem({ ...newItem, isPopular: e.target.checked })}
-                    />
-                    Popular
-                  </label>
+                    <span className="text-[10px] text-muted-foreground">min</span>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-xs">Prep Time (minutes)</Label>
-                  <Input
-                  
-                    type="number"
-                    value={newItem.preparationTime}
-                    onChange={(e) => setNewItem({ ...newItem, preparationTime: parseInt(e.target.value) || 15 })}
-                    className="w-24"
-                  />
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <Button size="sm" variant="outline" onClick={() => setShowAddItem(false)}>
+
+                <div className="flex items-center justify-end gap-1.5 pt-2 border-t">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowAddItem(false)}
+                    className="h-6 rounded-md text-[10px] px-2"
+                  >
                     Cancel
                   </Button>
-                  <Button size="sm" onClick={handleAddItem}>
-                    Add Item
+                  <Button
+                    size="sm"
+                    onClick={handleAddItem}
+                    className="h-6 rounded-md text-[10px] px-2 gap-1"
+                  >
+                    Add item
                   </Button>
                 </div>
               </div>
             )}
 
             {/* Items List */}
-            <div className="space-y-2">
+            <div className={cn('divide-y divide-border', viewMode === 'grid' && 'grid grid-cols-2 gap-1 divide-y-0')}>
               {category.items?.map((item: any) => (
                 <MenuItemRow
                   key={item.id}
@@ -251,9 +330,13 @@ export function CategoryItem({
                 />
               ))}
               {category.items?.length === 0 && !showAddItem && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No items in this category. Click the + button to add one.
-                </p>
+                <div className="flex flex-col items-center justify-center py-6">
+                  <div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center mb-2">
+                    <Utensils className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">No items yet</p>
+                  <p className="text-[10px] text-muted-foreground/70 mt-0.5">Click Add to create one</p>
+                </div>
               )}
             </div>
           </div>

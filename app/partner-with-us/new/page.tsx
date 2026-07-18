@@ -95,7 +95,7 @@ export default function RestaurantOnboardingPage() {
   const buttonConfig = getButtonConfig();
 
   // Show loading state
-  if (isLoading) {
+ /*  if (isLoading) {
     return (
       <main className="container mx-auto">
         <Navbar />
@@ -105,7 +105,7 @@ export default function RestaurantOnboardingPage() {
       </main>
     );
   }
-
+ */
   return (
     <>
       <main className="container mx-auto">

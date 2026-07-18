@@ -10,8 +10,8 @@ interface RestaurantProtectedRouteProps {
   children: React.ReactNode;
 }
 
-// Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/partner-with-us/new'];
+const PUBLIC_ROUTES = ['/onboarding', '/partner-with-us/new'];
+const SELF_PROTECTED_ROUTES = ['/partner-menu'];
 
 export function RestaurantProtectedRoute({ children }: RestaurantProtectedRouteProps) {
   const pathname = usePathname();
@@ -21,60 +21,106 @@ export function RestaurantProtectedRoute({ children }: RestaurantProtectedRouteP
     isAuthenticated, 
     redirectBasedOnStatus,
     fetchUser,
-    hasFetched
+    hasFetched,
+    user // Add user to check if it exists
   } = useAuthStore();
   
   const [isChecking, setIsChecking] = useState(true);
-  const checkDoneRef = useRef(false);
+  const initialCheckDone = useRef(false);
 
   useEffect(() => {
-    // Skip if already checked
-    if (checkDoneRef.current) return;
-
     const checkAuth = async () => {
-      // Fetch user if not fetched
-      if (!hasFetched) {
-        await fetchUser();
-      }
-
-      // Check if current path is public
-      const isPublicRoute = PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route));
-
-      // If not authenticated and not on public route, redirect to auth page
-      if (!isAuthenticated && !isPublicRoute) {
-        router.push('/partner-with-us/new');
-        setIsChecking(false);
-        checkDoneRef.current = true;
+      // Skip if already checked
+      if (initialCheckDone.current) {
+        console.log('⏭️ Initial check already done, skipping');
         return;
       }
 
-      // If authenticated, check onboarding status and redirect
-      if (isAuthenticated) {
+      console.log('🔐 RestaurantProtectedRoute checking auth...');
+      console.log('📍 Current path:', pathname);
+      console.log('🔑 isAuthenticated:', isAuthenticated);
+      console.log('👤 user exists:', !!user);
+      console.log('📊 hasFetched:', hasFetched);
+      
+      // Check public routes FIRST
+      const isPublicRoute = PUBLIC_ROUTES.some(route => 
+        pathname === route || pathname.startsWith(route)
+      );
+      
+      if (isPublicRoute) {
+        console.log(`📍 Public route (${pathname}), skipping all checks`);
+        setIsChecking(false);
+        initialCheckDone.current = true;
+        return;
+      }
+      
+      // Check self-protected routes
+      const isSelfProtected = SELF_PROTECTED_ROUTES.some(route => 
+        pathname === route || pathname.startsWith(route)
+      );
+      
+      if (isSelfProtected) {
+        console.log(`📍 Route ${pathname} handles its own protection, skipping`);
+        setIsChecking(false);
+        initialCheckDone.current = true;
+        return;
+      }
+      
+      // Fetch user if not fetched yet OR if user is null (logged out)
+      if (!hasFetched || !user) {
+        console.log('📊 Fetching user...');
+        await fetchUser();
+        // After fetch, check if we're authenticated
+        const authStore = useAuthStore.getState();
+        if (!authStore.isAuthenticated) {
+          console.log('🔴 Not authenticated after fetch, redirecting...');
+          router.push('/partner-with-us/new');
+          setIsChecking(false);
+          initialCheckDone.current = true;
+          return;
+        }
+      }
+
+      // Check authentication after potential fetch
+      const currentAuthState = useAuthStore.getState();
+      if (!currentAuthState.isAuthenticated) {
+        console.log('🔴 Not authenticated, redirecting to /partner-with-us/new');
+        router.push('/partner-with-us/new');
+        setIsChecking(false);
+        initialCheckDone.current = true;
+        return;
+      }
+
+      // If authenticated, check status
+      if (currentAuthState.isAuthenticated && currentAuthState.user) {
+        console.log('🟢 Authenticated, checking status...');
         await redirectBasedOnStatus();
       }
 
       setIsChecking(false);
-      checkDoneRef.current = true;
+      initialCheckDone.current = true;
     };
 
     checkAuth();
-  }, [pathname, isAuthenticated, hasFetched, fetchUser, redirectBasedOnStatus, router]);
+  }, [pathname, isAuthenticated, hasFetched, user, fetchUser, redirectBasedOnStatus, router]);
 
   // Show loading state
-  if (isLoading || isChecking) {
+  /* if (isLoading || isChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="text-muted-foreground text-sm">Loading...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     );
-  }
+  } */
 
-  // If not authenticated and on protected route, show nothing (will redirect)
-  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route));
-  if (!isAuthenticated && !isPublicRoute) {
+  // Check if current route is public
+  const isPublicRoute = PUBLIC_ROUTES.some(route => 
+    pathname === route || pathname.startsWith(route)
+  );
+  
+  // If not authenticated and not on public route, return null (will redirect)
+  const currentAuthState = useAuthStore.getState();
+  if (!currentAuthState.isAuthenticated && !isPublicRoute) {
     return null;
   }
 

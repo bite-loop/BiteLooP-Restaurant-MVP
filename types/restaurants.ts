@@ -169,7 +169,6 @@ export interface DayHours {
 // ============ MENU RELATED ============
 export interface Menu {
   restaurantId: string;
-  categories: MenuCategory[];
   lastUpdated: Timestamp;
 }
 
@@ -178,8 +177,11 @@ export interface MenuCategory {
   name: string;
   description?: string;
   displayOrder: number;
-  items: MenuItem[];
+  items: MenuItem[]; // You can still keep this as an array or use subcollections
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
+
 
 export interface MenuItem {
   id: string;
@@ -189,7 +191,7 @@ export interface MenuItem {
   originalPrice?: number;
   discountPercentage?: number;
   images: string[];
-  category: string;
+  category: string; 
   isVegetarian: boolean;
   isVegan: boolean;
   isGlutenFree: boolean;

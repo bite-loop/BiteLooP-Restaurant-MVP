@@ -71,32 +71,7 @@ export const Navbar = () => {
             .slice(0, 2)
     }
 
-    // Show loading state
-    if (isLoading) {
-        return (
-            <nav className="bg-transparent">
-                <div className="container mx-auto px-4">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center space-x-2">
-                            <Image
-                                src={theme === "dark" ? LOGOS.DARK : LOGOS.LIGHT}
-                                alt="FoodExpress Logo"
-                                className="h-24 w-24 object-contain"
-                                width={96}
-                                height={96}
-                            />
-                        </div>
-                        <div className="flex items-center space-x-3">
-                            <Button variant="outline" size="icon" className="border-border">
-                                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                            </Button>
-                            <div className="h-9 w-20 bg-muted animate-pulse rounded"></div>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-        )
-    }
+
 
     return (
         <nav className="bg-transparent">

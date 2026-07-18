@@ -1,5 +1,5 @@
 // hooks/useAuth.ts
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/auth-store';
 import type { Restaurant } from '@/types/restaurants';
 
@@ -23,12 +23,23 @@ export const useAuth = (): UseAuthReturn => {
     signUp, 
     signIn, 
     signInWithGoogle, 
-    signOut 
+    signOut,
+    hasFetched
   } = useAuthStore();
 
+  const fetchAttempted = useRef(false);
+
   useEffect(() => {
-    fetchUser();
-  }, []);
+    // ✅ Only fetch if not already fetched and not currently loading
+    // and we haven't attempted to fetch yet
+    if (!hasFetched && !isLoading && !fetchAttempted.current) {
+      fetchAttempted.current = true;
+      console.log('📡 useAuth: Fetching user on mount');
+      fetchUser();
+    } else {
+      console.log('📡 useAuth: Skipping fetch, hasFetched:', hasFetched, 'isLoading:', isLoading);
+    }
+  }, []); // ✅ Empty dependency array - only run once on mount
 
   return {
     user,

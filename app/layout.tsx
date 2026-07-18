@@ -50,7 +50,7 @@ export default function RootLayout({
         enableSystem
         disableTransitionOnChange
         >
-         <RestaurantProtectedRoute>
+          <RestaurantProtectedRoute> 
            <Toaster/>
           <main className="w-full min-h-screen">
             <div>
@@ -58,7 +58,7 @@ export default function RootLayout({
               {children}
             </div>
           </main>
-         </RestaurantProtectedRoute>
+        </RestaurantProtectedRoute> 
         </ThemeProvider>
       </body>
     </html>
