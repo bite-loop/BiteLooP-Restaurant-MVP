@@ -1,4 +1,4 @@
-// api/menu/category/route.ts
+// app/api/menu/category/route.ts
 import { adminDb } from "@/lib/firebase/admin";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
@@ -29,19 +29,32 @@ export async function POST(request: NextRequest) {
             name,
             description: description || '',
             displayOrder: 0,
-            items: [], // This will be managed in a separate subcollection
+            items: [],
+            itemCount: 0,
             createdAt: new Date(),
             updatedAt: new Date(),
         };
 
         await categoryRef.set(category);
 
-        // Also update the main menu document to track lastUpdated
+        // Also update the main menu document to track categories
         const menuRef = adminDb.collection('menus').doc(restaurantId);
-        await menuRef.set({
-            restaurantId,
-            lastUpdated: new Date(),
-        }, { merge: true });
+        const menuDoc = await menuRef.get();
+
+        if (menuDoc.exists) {
+            const menuData = menuDoc.data();
+            // Update the categories array in the main document for backward compatibility
+            await menuRef.update({
+                categories: [...(menuData?.categories || []), category],
+                lastUpdated: new Date(),
+            });
+        } else {
+            await menuRef.set({
+                restaurantId,
+                categories: [category],
+                lastUpdated: new Date(),
+            });
+        }
 
         return NextResponse.json(category, { status: 201 });
     } catch (error: any) {
@@ -90,11 +103,24 @@ export async function PATCH(request: NextRequest) {
 
         await categoryRef.update(updateData);
 
-        // Update lastUpdated in main menu document
+        // Also update in the main menu document's categories array
         const menuRef = adminDb.collection('menus').doc(restaurantId);
-        await menuRef.update({
-            lastUpdated: new Date(),
-        });
+        const menuDoc = await menuRef.get();
+        const menuData = menuDoc.data();
+
+        if (menuData?.categories) {
+            const updatedCategories = menuData.categories.map((cat: any) => {
+                if (cat.id === categoryId) {
+                    return { ...cat, ...updateData };
+                }
+                return cat;
+            });
+
+            await menuRef.update({
+                categories: updatedCategories,
+                lastUpdated: new Date(),
+            });
+        }
 
         const updatedCategory = await categoryRef.get();
         return NextResponse.json(updatedCategory.data());
@@ -120,20 +146,39 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Delete the category document
+        // Delete the category document and all its items
         const categoryRef = adminDb
             .collection('menus')
             .doc(restaurantId)
             .collection('categories')
             .doc(categoryId);
 
+        // Delete all items in the category's items subcollection
+        const itemsSnapshot = await categoryRef.collection('items').get();
+        const batch = adminDb.batch();
+        itemsSnapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+
+        // Delete the category document
         await categoryRef.delete();
 
-        // Update lastUpdated in main menu document
+        // Remove from the main menu document's categories array
         const menuRef = adminDb.collection('menus').doc(restaurantId);
-        await menuRef.update({
-            lastUpdated: new Date(),
-        });
+        const menuDoc = await menuRef.get();
+        const menuData = menuDoc.data();
+
+        if (menuData?.categories) {
+            const updatedCategories = menuData.categories.filter(
+                (cat: any) => cat.id !== categoryId
+            );
+
+            await menuRef.update({
+                categories: updatedCategories,
+                lastUpdated: new Date(),
+            });
+        }
 
         return NextResponse.json({ success: true });
     } catch (error: any) {
@@ -160,7 +205,7 @@ export async function GET(request: NextRequest) {
         }
 
         if (categoryId) {
-            // Get single category
+            // Get single category with its items
             const categoryRef = adminDb
                 .collection('menus')
                 .doc(restaurantId)
@@ -176,9 +221,22 @@ export async function GET(request: NextRequest) {
                 );
             }
 
-            return NextResponse.json(categoryDoc.data());
+            const categoryData = categoryDoc.data();
+            
+            // Fetch items for this category
+            const itemsSnapshot = await categoryRef
+                .collection('items')
+                .orderBy('createdAt', 'desc')
+                .get();
+
+            const items = itemsSnapshot.docs.map(doc => doc.data());
+            
+            return NextResponse.json({
+                ...categoryData,
+                items,
+            });
         } else {
-            // Get all categories
+            // Get all categories with their items
             const categoriesSnapshot = await adminDb
                 .collection('menus')
                 .doc(restaurantId)
@@ -186,8 +244,22 @@ export async function GET(request: NextRequest) {
                 .orderBy('displayOrder')
                 .get();
 
-            const categories = categoriesSnapshot.docs.map(doc => doc.data());
-            return NextResponse.json(categories);
+            const categoriesWithItems = await Promise.all(
+                categoriesSnapshot.docs.map(async (doc) => {
+                    const categoryData = doc.data();
+                    const itemsSnapshot = await doc.ref
+                        .collection('items')
+                        .orderBy('createdAt', 'desc')
+                        .get();
+                    const items = itemsSnapshot.docs.map(itemDoc => itemDoc.data());
+                    return {
+                        ...categoryData,
+                        items,
+                    };
+                })
+            );
+
+            return NextResponse.json(categoriesWithItems);
         }
     } catch (error: any) {
         console.error('Error fetching categories:', error);

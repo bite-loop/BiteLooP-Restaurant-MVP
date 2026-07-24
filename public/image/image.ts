@@ -19,6 +19,7 @@ import ARROW from './arrow.png'
 import PHONE from './phone.png'
 import RECOM from './recom.png'
 import SMILEY from './smiley.png'
+import BurgerGuide from "./burger.jpg"
 export const FOOD = {
      BURGER,
      SLURPY,
@@ -47,4 +48,6 @@ export const RESTAURANTSIMG = {
     RESTAURANTSFIVE,
     RESTAURANTSSIX
 }
-
+export const MENUGUIDE = {
+     BurgerGuide
+}
