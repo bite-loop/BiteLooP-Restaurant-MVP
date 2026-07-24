@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
 import { v4 as uuidv4 } from 'uuid';
 
-// POST - Add a new menu item to a category subcollection
+// POST - Add a new menu item
 export async function POST(request: NextRequest) {
   try {
     const { restaurantId, categoryId, ...itemData } = await request.json();
@@ -16,10 +16,37 @@ export async function POST(request: NextRequest) {
     }
 
     const itemId = `item_${uuidv4()}`;
+    
+    // Create the full item object with all fields
     const newItem = {
       id: itemId,
-      ...itemData,
+      name: itemData.name || '',
+      description: itemData.description || '',
+      price: itemData.price || 0,
+      originalPrice: itemData.originalPrice || 0,
+      discountPercentage: itemData.discountPercentage || 0,
+      images: itemData.images || [],
       category: categoryId,
+      isVegetarian: itemData.isVegetarian || false,
+      isVegan: itemData.isVegan || false,
+      isGlutenFree: itemData.isGlutenFree || false,
+      containsAllergens: itemData.containsAllergens || [],
+      isAvailable: itemData.isAvailable !== undefined ? itemData.isAvailable : true,
+      isPopular: itemData.isPopular || false,
+      preparationTime: itemData.preparationTime || 15,
+      customizationOptions: itemData.customizationOptions || [],
+      nutritionalInfo: itemData.nutritionalInfo || {
+        calories: 0,
+        protein: '',
+        carbs: '',
+        fat: '',
+      },
+      costToMake: itemData.costToMake || 0,
+      profitMargin: itemData.profitMargin || 0,
+      hasLimitedStock: itemData.hasLimitedStock || false,
+      stockQuantity: itemData.stockQuantity || 0,
+      rating: 0,
+      numberOfRatings: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -40,16 +67,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Option 1: Store items as a subcollection of the category
+    // Store item in subcollection
     const itemRef = categoryRef.collection('items').doc(itemId);
     await itemRef.set(newItem);
 
-    // Option 2: Also maintain the items array in the category document for easier querying
-    // (Use this if you want to keep backward compatibility)
+    // Also maintain the items array in the category document
     const categoryData = categoryDoc.data();
     await categoryRef.update({
       items: [...(categoryData?.items || []), newItem],
       updatedAt: new Date(),
+      itemCount: (categoryData?.itemCount || 0) + 1,
     });
 
     // Update lastUpdated in main menu document
@@ -90,7 +117,6 @@ export async function GET(request: NextRequest) {
       .doc(categoryId);
 
     if (itemId) {
-      // Get single item from subcollection
       const itemRef = categoryRef.collection('items').doc(itemId);
       const itemDoc = await itemRef.get();
 
@@ -103,7 +129,6 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json(itemDoc.data());
     } else {
-      // Get all items from subcollection
       const itemsSnapshot = await categoryRef
         .collection('items')
         .orderBy('createdAt', 'desc')
@@ -150,14 +175,35 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const updateData = {
-      ...data,
+    // Build update data with all possible fields
+    const updateData: any = {
       updatedAt: new Date(),
     };
 
+    // Only update fields that are provided
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.price !== undefined) updateData.price = data.price;
+    if (data.originalPrice !== undefined) updateData.originalPrice = data.originalPrice;
+    if (data.discountPercentage !== undefined) updateData.discountPercentage = data.discountPercentage;
+    if (data.images !== undefined) updateData.images = data.images;
+    if (data.isVegetarian !== undefined) updateData.isVegetarian = data.isVegetarian;
+    if (data.isVegan !== undefined) updateData.isVegan = data.isVegan;
+    if (data.isGlutenFree !== undefined) updateData.isGlutenFree = data.isGlutenFree;
+    if (data.containsAllergens !== undefined) updateData.containsAllergens = data.containsAllergens;
+    if (data.isAvailable !== undefined) updateData.isAvailable = data.isAvailable;
+    if (data.isPopular !== undefined) updateData.isPopular = data.isPopular;
+    if (data.preparationTime !== undefined) updateData.preparationTime = data.preparationTime;
+    if (data.customizationOptions !== undefined) updateData.customizationOptions = data.customizationOptions;
+    if (data.nutritionalInfo !== undefined) updateData.nutritionalInfo = data.nutritionalInfo;
+    if (data.costToMake !== undefined) updateData.costToMake = data.costToMake;
+    if (data.profitMargin !== undefined) updateData.profitMargin = data.profitMargin;
+    if (data.hasLimitedStock !== undefined) updateData.hasLimitedStock = data.hasLimitedStock;
+    if (data.stockQuantity !== undefined) updateData.stockQuantity = data.stockQuantity;
+
     await itemRef.update(updateData);
 
-    // Also update the items array in the category document if you're maintaining it
+    // Also update the items array in the category document
     const categoryRef = adminDb
       .collection('menus')
       .doc(restaurantId)
@@ -170,7 +216,7 @@ export async function PATCH(request: NextRequest) {
     if (categoryData?.items) {
       const updatedItems = categoryData.items.map((item: any) => {
         if (item.id === itemId) {
-          return { ...item, ...data, updatedAt: new Date() };
+          return { ...item, ...updateData };
         }
         return item;
       });
@@ -221,7 +267,7 @@ export async function DELETE(request: NextRequest) {
 
     await itemRef.delete();
 
-    // Also remove from the items array in the category document if you're maintaining it
+    // Also remove from the items array in the category document
     const categoryRef = adminDb
       .collection('menus')
       .doc(restaurantId)
@@ -239,6 +285,7 @@ export async function DELETE(request: NextRequest) {
       await categoryRef.update({
         items: updatedItems,
         updatedAt: new Date(),
+        itemCount: Math.max((categoryData?.itemCount || 1) - 1, 0),
       });
     }
 
